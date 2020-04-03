@@ -28,6 +28,21 @@
             <artifactId>biz-logback</artifactId>
             <version>${biz.logback.version}</version>
         </dependency>
+             <dependency>
+            <groupId>com.biz</groupId>
+            <artifactId>biz-base</artifactId>
+            <version>${biz.base.version}</version>
+        </dependency>
+             <dependency>
+            <groupId>com.biz</groupId>
+            <artifactId>biz-base</artifactId>
+            <version>${biz.base.version}</version>
+        </dependency>
+             <dependency>
+            <groupId>com.biz</groupId>
+            <artifactId>biz-base</artifactId>
+            <version>${biz.base.version}</version>
+        </dependency>
     </dependencies>
 
 </project>
