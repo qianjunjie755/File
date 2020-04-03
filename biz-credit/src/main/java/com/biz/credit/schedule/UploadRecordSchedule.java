@@ -78,6 +78,8 @@ public class UploadRecordSchedule {
 
     }
 
+edit this in the git server
+
     public static void main(String[] args) {
         DateTime dateTime = DateTime.now();
         DateTime dateTime2 = dateTime.minusDays(1);
@@ -86,7 +88,7 @@ public class UploadRecordSchedule {
 
         String key = "biz_credit:report:uploadLimit:user::4000159:1";
         System.out.println(key.substring("biz_credit:report:uploadLimit:user::".length(),key.indexOf(":","biz_credit:report:uploadLimit:user::".length())));
-        System.out.println(key.substring(key.lastIndexOf(":")+1));
+        System.out.println(key.substring(key.lastIndexOf(":")+1)); any conflit?
         DateTime t = DateTime.parse("2017");
         System.out.println(t.toString());
     }
