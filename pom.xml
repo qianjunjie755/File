@@ -17,6 +17,19 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
+     <dependencies>
+        <dependency>
+            <groupId>com.biz</groupId>
+            <artifactId>biz-base</artifactId>
+            <version>${biz.base.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.biz</groupId>
+            <artifactId>biz-logback</artifactId>
+            <version>${biz.logback.version}</version>
+        </dependency>
+    </dependencies>
+
     <dependencies>
         <dependency>
             <groupId>com.biz</groupId>
