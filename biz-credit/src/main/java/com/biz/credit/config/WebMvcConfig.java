@@ -1,6 +1,6 @@
 package com.biz.credit.config;
 
-import com.biz.credit.interceptor.POCInterceptor;
+impor
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -15,13 +15,15 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Autowired
     private POCInterceptor pocInterceptor;
 
+    some change here
+
     //手动配置静态资源路径
     @Override
     public void configurePathMatch(PathMatchConfigurer configurer) {
         configurer.setUseSuffixPatternMatch(false).
                 setUseTrailingSlashMatch(true);
     }
-
+    some change here
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(pocInterceptor).excludePathPatterns("/strategy/flow/list", "/strategy/flow/start", "/strategy/varThreshold/list", "/strategy/basic/info", "/strategy/company/slice");
