@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.RuleDAO">
+    <resultMap id="rule_map" type="com.biz.credit.vo.RuleVO">
+        <result property="ruleId" column="rule_id" />
+        <result property="ruleCode" column="rule_code" />
+        <result property="ruleName" column="rule_name" />
+        <result property="businessCode" column="business_code" />
+        <result property="version" column="version" />
+        <result property="calcLogic" column="calc_logic" />
+        <result property="userId" column="user_id" />
+        <result property="apiCode" column="api_code" />
+        <result property="srcRuleId" column="src_rule_id" />
+        <result property="ruleState" column="rule_state" />
+        <result property="isTemplate" column="is_template" />
+        <result property="apiProdCode" column="api_prod_code" />
+        <result property="apiVersion" column="api_version" />
+        <result property="description" column="description" />
+        <result property="lastUpdateTime" column="last_update_time" />
+        <result property="createTime" column="create_time" />
+        <result property="weight" column="weight" />
+    </resultMap>
+
+    <insert id="addRule" useGeneratedKeys="true" keyProperty="rule.ruleId"   parameterType="com.biz.credit.vo.RuleVO">
+        INSERT INTO t_rule
+        (rule_code,
+         rule_name,
+         business_code,
+         version,
+         calc_logic,
+         user_id,
+         api_code,
+         src_rule_id,
+         rule_state,
+         is_template,
+         api_prod_code,
+         api_version,
+         description,
+         last_update_time,
+         create_time,
+         weight)
+        VALUES
+            (#{rule.ruleCode},#{rule.ruleName},#{rule.businessCode},#{rule.version},#{rule.calcLogic},#{rule.userId},
+                              #{rule.apiCode},#{rule.srcRuleId},#{rule.ruleState},#{rule.isTemplate},#{rule.apiProdCode},#{rule.apiVersion},
+             #{rule.description},now(),now(),#{rule.weight})
+    </insert>
+
+    <insert id="addRuleList" useGeneratedKeys="true" keyProperty="ruleId"   parameterType="java.util.List">
+        INSERT INTO t_rule
+        (rule_code,
+        rule_name,
+        business_code,
+        version,
+        calc_logic,
+        user_id,
+        api_code,
+        src_rule_id,
+        rule_state,
+        is_template,
+        api_prod_code,
+        api_version,
+        description,
+        last_update_time,
+        create_time,
+        weight)
+        VALUES
+        <foreach collection ="list" item="rule" index="index" separator=",">
+            (#{rule.ruleCode},#{rule.ruleName},#{rule.businessCode},#{rule.version},#{rule.calcLogic},#{rule.userId},
+            #{rule.apiCode},#{rule.srcRuleId},#{rule.ruleState},#{rule.isTemplate},#{rule.apiProdCode},#{rule.apiVersion},
+            #{rule.description},now(),now(),#{rule.weight})
+        </foreach>
+    </insert>
+
+    <update id="updateRule" parameterType="com.biz.credit.vo.RuleVO">
+        UPDATE t_rule
+        SET
+            rule_name = #{rule.ruleName},
+            business_code = #{rule.businessCode},
+            calc_logic = #{rule.calcLogic},
+            description = #{rule.description},
+            src_rule_id = #{rule.srcRuleId},
+            last_update_time = now()
+        WHERE rule_id = #{rule.ruleId}
+    </update>
+
+    <update id="updateRuleState" parameterType="com.biz.credit.vo.RuleVO">
+        UPDATE t_rule
+        SET
+            rule_state = #{ruleState},
+            last_update_time = now()
+        WHERE rule_id = #{ruleId}
+    </update>
+    <update id="updateRuleCalcLogic" parameterType="com.biz.credit.vo.RuleVO">
+        UPDATE t_rule
+        SET
+            calc_logic = #{rule.calcLogic},
+            last_update_time = now()
+        WHERE rule_id = #{rule.ruleId}
+    </update>
+    <update id="updateRuleForCopyStrategy" parameterType="com.biz.credit.vo.RuleVO">
+        UPDATE t_rule a,
+            (select b.rule_id from t_ruleset_rule b where b.rule_set_id in (select c.rule_set_id from t_strategy_rule_set c where c.strategy_id=#{rule.strategyId})) d
+        SET
+            a.src_rule_id=a.rule_id,last_update_time=now()
+        where a.api_code=#{rule.apiCode} and a.is_template=#{rule.isTemplate} and a.user_id=#{rule.userId} and a.rule_id=d.rule_id
+    </update>
+
+    <select id="findAllRule" resultMap="rule_map" parameterType="com.biz.credit.vo.RuleVO">
+        select
+            t.rule_id,t.rule_code ,t.rule_name ,t.business_code,t.version,t.calc_logic,t.user_id,t.api_code, t.src_rule_id, t.rule_state,t.is_template,
+            t.api_prod_code,t.api_version,t.description,date_format(t.last_update_time,'%Y-%m-%d %T') last_update_time,
+                                                        date_format(t.create_time,'%Y-%m-%d %T') create_time
+        from t_rule t
+        where t.api_code = #{rule.apiCode} and t.is_template = #{rule.isTemplate}
+    </select>
+
+    <select id="findRuleById" resultMap="rule_map">
+        select
+        t.rule_id,t.rule_code ,t.rule_name ,t.business_code,t.version,t.calc_logic,t.user_id,t.api_code, t.src_rule_id, t.rule_state,t.is_template,
+        t.api_prod_code,t.api_version,t.description,date_format(t.last_update_time,'%Y-%m-%d %T') last_update_time, date_format(t.create_time,'%Y-%m-%d %T') create_time
+        from t_rule t
+        where t.rule_id = #{ruleId}
+        <if test="null != userId">
+            and t.user_id = #{userId}
+        </if>
+        <if test="null != apiCode">
+            and t.api_code = #{apiCode}
+        </if>
+    </select>
+
+
+
+    <select id="findRuleVersion" resultMap="rule_map" >
+        select
+            distinct(t.version) version,t.rule_id,t.rule_code,t.rule_state
+        from t_rule t
+        where t.src_rule_id = #{ruleId} and is_template = 1 and api_code=#{apiCode}
+    </select>
+
+    <select id="findRules" resultMap="rule_map" parameterType="com.biz.credit.vo.RuleVO">
+        select
+            t.rule_code ,any_value(t.rule_name) rule_name
+        from t_rule t
+        where t.api_code = #{rule.apiCode} and t.is_template = #{rule.isTemplate}
+        GROUP BY t.rule_code
+    </select>
+
+    <select id="findRelatedVariables" resultType="Integer" parameterType="com.biz.credit.vo.RuleVO">
+        SELECT
+            COUNT(*) FROM t_variable t
+        WHERE t.rule_id = #{ruleId}
+    </select>
+
+    <delete id="deleteRule" parameterType="com.biz.credit.vo.RuleVO">
+        DELETE FROM t_rule
+        WHERE rule_id = #{rule.ruleId}
+    </delete>
+
+
+    <select id="findVariableByRuleId" resultType="com.biz.credit.vo.VariableVO">
+        select v.variable_id,v.variable_code,vp.variable_name,vp.description,fp.frequency_code,fp.frequency_name from t_rule r
+            inner join t_variable v on r.rule_id=v.rule_id
+            left join t_frequency_pool fp on fp.frequency_code=v.frequency_code
+            left join t_variable_pool vp on vp.variable_code=v.variable_code
+        where r.rule_id=#{ruleId}
+    </select>
+
+    <select id="findRuleVersionByRuleId" resultMap="rule_map" parameterType="com.biz.credit.vo.RuleVO">
+        select
+            t1.rule_id,t1.rule_code ,t1.version,t1.rule_state
+        from t_rule t1 left join t_rule t2 on t1.rule_code = t2.rule_code
+        where t2.rule_id = #{ruleId}
+    </select>
+
+    <select id="findMaxRuleVersion" resultType="long">
+        select max(version) from t_rule where rule_code=#{ruleCode}
+    </select>
+</mapper>

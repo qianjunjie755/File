@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.warning.dao.WarnResultVariableDAO">
+    <insert id="addWarnResultVariableList"   parameterType="java.util.List" useGeneratedKeys="true" keyProperty="warnResultVariableId" >
+      insert into risk_warning.t_warn_result_variable (hit_time,src_rule_id, rule_id, rule_set_id, strategy_id, variable_id, variable_code, threshold, trigger_threshold, task_id, entity_id, description, last_update_time, create_time,period,period_unit,detail_existed) VALUES
+        <foreach collection="list"  item="item" separator="," index="index">
+            (#{item.hitTime},#{item.srcRuleId},#{item.ruleId},#{item.ruleSetId},#{item.strategyId},#{item.variableId},#{item.variableCode},#{item.threshold},#{item.triggerThreshold},#{item.taskId},#{item.entityId},#{item.description},now(),now(),#{item.period},#{item.periodUnit},#{item.detailExisted})
+        </foreach>
+    </insert>
+    <insert id="insertVariableDetail" parameterType="java.util.List">
+        INSERT INTO t_variable_detail (warn_id, entity_id, variable_id, hit_date, var_detail) VALUES
+        <foreach collection="list"  item="item" separator="," index="index">
+            (#{item.warnId}, #{item.entityId}, #{item.variableId}, #{item.hitDate}, #{item.varDetail})
+        </foreach>
+    </insert>
+</mapper>

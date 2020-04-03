@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.DTreeCondDAO">
+    <resultMap id="dTreeCond_info" type="com.biz.credit.domain.DTreeCond">
+        <result column="id" property="id" />
+        <result column="var_id" property="varId" />
+        <result column="cond_judge" property="condJudge" />
+        <result column="cond_order" property="condOrder"/>
+        <result column="out_value" property="outValue"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="tree_id" property="treeId"/>
+        <result column="next_var_id" property="nextVarId"/>
+        <result column="status" property="status"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+    <insert id="insertCond" useGeneratedKeys="true" keyProperty="dTreeCond.id" parameterType="com.biz.credit.domain.DTreeCond">
+       insert into t_d_tree_cond(id,var_id, cond_judge, cond_order, out_value, parent_id, tree_id, status,update_time,
+        create_time)
+       values(#{dTreeCond.id},#{dTreeCond.varId},#{dTreeCond.condJudge},#{dTreeCond.condOrder},#{dTreeCond.outValue},#{dTreeCond.parentId},#{dTreeCond.treeId},
+       #{dTreeCond.status},now(),now())
+    </insert>
+
+    <update id="updateCond" parameterType="java.lang.Long">
+        update  t_d_tree_cond
+        set status =0
+        where tree_Id=#{treeId}
+    </update>
+    <update id="update" parameterType="com.biz.credit.domain.DTreeCond">
+        update t_d_tree_cond
+        SET
+        out_value=#{dTreeCond.outValue}
+        where id=#{dTreeCond.id}
+     </update>
+    <resultMap id="tree_list" type="com.biz.credit.vo.TreeData">
+        <result column="id" property="id" />
+        <result column="var_id" property="varId" />
+        <result column="variable_name" property="varName"/>
+        <result column="parent_id" property="parentId"/>
+    </resultMap>
+    <select id="queryVarName" parameterType="long" resultMap="tree_list">
+        select t.id,t.var_id,b.variable_name,t.parent_id
+        from t_d_tree_cond t
+        left join t_variable_pool b on t.var_id = b.variable_code
+        where t.tree_id = #{treeId} and t.status = 1
+    </select>
+
+    <select id="queryCond" parameterType="com.biz.credit.domain.DTreeVar" resultMap="dTreeCond_info">
+        select t.id,t.var_id,t.cond_judge, t.cond_order, t.out_value, t.parent_id,t.next_var_id, t.tree_id, t.status,t.update_time,
+        t.create_time
+        from t_d_tree_cond t
+        where t.status=1 and t.tree_id = #{dTreeVar.treeId} and t.var_id=#{dTreeVar.varId}
+    </select>
+    <select id="queryListByCond" parameterType="com.biz.credit.domain.DTreeCond" resultMap="dTreeCond_info">
+        select t.id,t.var_id,t.cond_judge, t.cond_order, t.out_value, t.parent_id,t.next_var_id, t.tree_id, t.status,t.update_time,
+        t.create_time
+        from t_d_tree_cond t
+        where t.status=1 and t.tree_id = #{dtreeCond.treeId} and t.parent_id=#{dtreeCond.id}
+    </select>
+    <resultMap id="dTreeVar_info" type="com.biz.credit.domain.DTreeVar">
+        <result column="var_id" property="varId" />
+        <result column="out_value" property="outValue"/>
+        <result column="tree_id" property="treeId"/>
+    </resultMap>
+    <select id="queryCondOut" parameterType="com.biz.credit.domain.DTreeCond" resultMap="dTreeVar_info">
+        select t.var_id,t.out_value,t.tree_id
+        from t_d_tree_cond t
+        where t.status=1 and t.tree_id = #{dTreeCond.treeId} and t.id=#{dTreeCond.id}
+    </select>
+
+    <update id="updateNextId" parameterType="com.biz.credit.domain.DTreeCond">
+        update t_d_tree_cond
+        SET
+        next_var_id=#{dTreeCond.nextVarId}
+        where id=#{dTreeCond.id}
+    </update>
+
+
+</mapper>

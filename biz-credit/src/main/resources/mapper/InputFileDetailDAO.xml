@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.InputFileDetailDAO">
+    <insert id="addInputFileDetail"  useGeneratedKeys="true" keyProperty="inputFileDetail.inputFileDetailId" parameterType="com.biz.credit.domain.InputFileDetail" >
+      insert into input_file_detail
+          (input_file_id,
+          task_id,
+          pdf_file_path,
+          pdf_file_name,
+          status,
+          key_no,
+          credit_code,
+          id_number,
+          cell_phone,
+          name,
+          bank_id,
+          home_addr,
+          biz_addr,
+          last_update_time,
+          create_time)
+     values
+        (#{inputFileDetail.inputFileId},
+        #{inputFileDetail.taskId},
+        #{inputFileDetail.pdfFilePath},
+        #{inputFileDetail.pdfFileName},
+        #{inputFileDetail.status},
+        #{inputFileDetail.keyNo},
+        #{inputFileDetail.creditCode},
+        #{inputFileDetail.idNumber},
+        #{inputFileDetail.cellPhone},
+        #{inputFileDetail.name},
+        #{inputFileDetail.bankId},
+        #{inputFileDetail.homeAddr},
+         #{inputFileDetail.bizAddr},
+        now(),
+        now())
+    </insert>
+    <insert id="addInputFileDetails" useGeneratedKeys="true"  parameterType="java.util.List"  keyProperty="inputFileDetailId">
+        insert into input_file_detail (
+        input_file_id, task_id, key_no, credit_code,name,cell_phone,id_number,bank_id,home_addr,biz_addr, last_update_time, create_time,date,month,year,related_people)
+        values
+            <foreach collection="list"  item="item" separator="," index="index">
+                (#{item.inputFileId},#{item.taskId},#{item.keyNo},#{item.creditCode},#{item.name},#{item.cellPhone},#{item.idNumber},#{item.bankId},#{item.homeAddr},#{item.bizAddr},#{item.lastUpdateTime},#{item.createTime},#{item.date},#{item.month},#{item.year},#{item.relatedPeople})
+            </foreach>
+    </insert>
+    <insert id="addInputFileParams">
+        insert into input_file_detail_params (input_file_detail_id, `code`, `name`, `type`, `required`, `value`) values
+        <foreach collection="list" item="item" separator="," index="index">
+            (#{id}, #{item.code}, #{item.name}, #{item.type}, #{item.required}, #{item.value})
+        </foreach>
+    </insert>
+
+    <update id="updateInputFileDetail" parameterType="com.biz.credit.domain.InputFileDetail">
+      update input_file_detail t
+      set
+          t.pdf_file_path = #{inputFileDetail.pdfFilePath},
+          t.pdf_file_name = #{inputFileDetail.pdfFileName},
+          t.status = #{inputFileDetail.status},
+          t.last_update_time = now()
+      where t.input_file_detail_id = #{inputFileDetail.inputFileDetailId}
+    </update>
+    <update id="updateApiInputFileDetail" parameterType="com.biz.credit.domain.InputFileDetail">
+        update api_input_file_detail t
+        set
+            t.pdf_file_path = #{inputFileDetail.pdfFilePath},
+            t.pdf_file_name = #{inputFileDetail.pdfFileName},
+            t.status = #{inputFileDetail.status},
+            t.last_update_time = now()
+        where t.input_file_detail_id = #{inputFileDetail.inputFileDetailId}
+    </update>
+    <resultMap id="inputFileDetail_list"  type="com.biz.credit.domain.InputFileDetail">
+        <result property="inputFileDetailId" column="input_file_detail_id" />
+        <result property="inputFileId" column="input_file_id" />
+        <result property="taskId" column="task_id" />
+        <result property="pdfFileName" column="pdf_file_name" />
+        <result property="pdfFilePath" column="pdf_file_path" />
+        <result property="status" column="status" />
+        <result property="keyNo" column="key_no" />
+        <result property="creditCode" column="credit_code" />
+        <result property="idNumber" column="id_number" />
+        <result property="cellPhone" column="cell_phone" />
+        <result property="bankId" column="bank_id" />
+        <result property="name" column="name" />
+        <result property="homeAddr" column="home_addr" />
+        <result property="bizAddr" column="biz_addr" />
+        <result property="lastUpdateTime" column="last_update_time" />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+
+   <resultMap id="inputFileDetailVOMap"  type="com.biz.credit.vo.InputFileDetailVO">
+        <result property="inputFileDetailId" column="input_file_detail_id" />
+        <result property="inputFileId" column="input_file_id" />
+        <result property="taskId" column="task_id" />
+        <result property="pdfFileName" column="pdf_file_name" />
+        <result property="pdfFilePath" column="pdf_file_path" />
+        <result property="status" column="status" />
+        <result property="keyNo" column="key_no" />
+        <result property="creditCode" column="credit_code" />
+        <result property="idNumber" column="id_number" />
+        <result property="cellPhone" column="cell_phone" />
+        <result property="name" column="name" />
+        <result property="bankId" column="bank_id" />
+        <result property="homeAddr" column="home_addr" />
+        <result property="bizAddr" column="biz_addr" />
+        <result property="lastUpdateTime" column="last_update_time" />
+        <result property="createTime" column="create_time" />
+        <result property="userId" column="user_id" />
+        <result property="apiCode" column="api_code" />
+        <result property="moduleTypeId" column="module_type_id" />
+        <result property="reportType" column="report_type" />
+        <result property="industryId" column="industry_id" />
+        <result property="appId" column="app_id" />
+        <result property="taskStatus" column="task_status" />
+        <result property="strategyId" column="strategy_id" />
+        <result property="apiTaskId" column="api_task_id" />
+    </resultMap>
+    <select id="findInputFileDetailList"  resultMap="inputFileDetailVOMap"  resultType="com.biz.credit.vo.InputFileDetailVO">
+        select
+            t.input_file_detail_id,
+            t.input_file_id,
+            t.task_id,
+            t.pdf_file_path,
+            t.pdf_file_name,
+            t.status,
+            t.key_no,
+            t.credit_code,
+            t.id_number,
+            t.cell_phone,
+            t.bank_id,
+            t.name,
+            t.home_addr,
+            t.biz_addr,
+            t1.task_status,
+            t1.module_type_id,
+            ty.strategy_id,
+            date_format(t.last_update_time,'%Y-%m-%d %T') last_update_time,
+            date_format(t.create_time,'%Y-%m-%d %T') create_time
+        from input_file_detail t
+        inner join task t1 on t.task_id=t1.task_id
+        left join module_type ty on t1.module_type_id=ty.module_type_id
+        <where>  t.status!=4
+            <if test="inputFileDetail.inputFileDetailId != null and inputFileDetail.inputFileDetailId != ''">
+                and t.input_file_detail_id = #{inputFileDetail.inputFileDetailId}
+            </if>
+            <if test="inputFileDetail.taskId != null and inputFileDetail.taskId != ''">
+                and t.task_id = #{inputFileDetail.taskId}
+            </if>
+            <if test="inputFileDetail.inputFileId != null and inputFileDetail.inputFileId != ''">
+                and t.input_file_id = #{inputFileDetail.inputFileId}
+            </if>
+            <if test="inputFileDetail.userId != null and inputFileDetail.userId != ''">
+                and t1.user_id = #{inputFileDetail.userId}
+            </if>
+            <if test="inputFileDetail.apiCode != null and inputFileDetail.apiCode != ''">
+                and t1.api_code = #{inputFileDetail.apiCode}
+            </if>
+        </where>
+        order by t.create_time desc
+    </select>
+    <select id="findInputFileDetail"  resultMap="inputFileDetailVOMap" parameterType="com.biz.credit.vo.InputFileDetailVO">
+        select
+        distinct(t.input_file_detail_id) input_file_detail_id,
+        t.input_file_id,
+        t.task_id,
+        t.pdf_file_path,
+        t.pdf_file_name,
+        t.status,
+        t.key_no,
+        t.credit_code,
+        t.id_number,
+        t.cell_phone,
+        t.bank_id,
+        t.name,
+        t.home_addr,
+        t.biz_addr,
+        t1.module_type_id,
+        t2.report_type,
+        t1.industry_id,
+        t.related_people,
+        date_format(t.last_update_time,'%Y-%m-%d %T') last_update_time,
+        date_format(t.create_time,'%Y-%m-%d %T') create_time
+        from input_file_detail t
+        inner join task t1 on t.task_id=t1.task_id
+        inner join module_type t2 on t1.module_type_id=t2.module_type_id
+        <where>  1=1
+            <if test="inputFileDetail.inputFileDetailId != null ">
+                and t.input_file_detail_id = #{inputFileDetail.inputFileDetailId}
+            </if>
+            <if test="inputFileDetail.userId != null ">
+                and t1.user_id = #{inputFileDetail.userId}
+            </if>
+            <if test="inputFileDetail.apiCode != null and inputFileDetail.apiCode != '' ">
+                and t1.api_code = #{inputFileDetail.apiCode}
+            </if>
+            <if test="inputFileDetail.users != null and inputFileDetail.users.size >0 ">
+                and t1.user_id in
+                <foreach item="item" index="index" collection="inputFileDetail.users"
+                         open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+    <select id="findApiInputFileDetail" resultMap="inputFileDetailVOMap" resultType="com.biz.credit.domain.InputFileDetail">
+        select
+            t.input_file_detail_id,
+            t.api_code,
+            t.pdf_file_path,
+            t.pdf_file_name,
+            t.status,
+            t.key_no,
+            t.credit_code,
+            t.id_number,
+            t.cell_phone,
+            t.bank_id,
+            t.name,
+            t.home_addr,
+            t.biz_addr,
+            t.industry_id,
+            t.report_type,
+            t.app_id,
+            t.api_task_id,
+            date_format(t.last_update_time,'%Y-%m-%d %T') last_update_time,
+            date_format(t.create_time,'%Y-%m-%d %T') create_time
+        from api_input_file_detail t
+        where t.input_file_detail_id = #{inputFileDetail.inputFileDetailId}
+    </select>
+    <select id="queryTaskByInputDetailName" resultMap="inputFileDetail_list" resultType="com.biz.credit.domain.InputFileDetail">
+        select
+        t.input_file_detail_id,
+        t.input_file_id,
+        t.task_id,
+        t.pdf_file_path,
+        t.pdf_file_name,
+        t.status,
+        t.key_no,
+        t.credit_code,
+        t.id_number,
+        t.cell_phone,
+        t.bank_id,
+        t.name,
+        t.home_addr,
+        t.biz_addr,
+        t1.task_type,
+        date_format(t.last_update_time,'%Y-%m-%d %T') last_update_time,
+        date_format(t.create_time,'%Y-%m-%d %T') create_time
+        from input_file_detail t
+        inner join task t1 on t.task_id=t1.task_id
+        <where>  1=1
+            <if test="inputFileDetail.keyNo != null and inputFileDetail.keyNo != ''">
+                and t.key_no like concat('%',concat(#{inputFileDetail.keyNo},'%'))
+            </if>
+            <if test="inputFileDetail.beginTime != null and inputFileDetail.beginTime != ''">
+                and t.create_time &gt;= #{inputFileDetail.beginTime}
+            </if>
+            <if test="inputFileDetail.endTime != null and inputFileDetail.endTime != ''">
+                and t.create_time &lt;= #{inputFileDetail.endTime}
+            </if>
+            <if test="inputFileDetail.userId != null and inputFileDetail.userId != ''">
+                and t1.user_id = #{inputFileDetail.userId}
+            </if>
+            <if test="inputFileDetail.apiCode != null and inputFileDetail.apiCode != ''">
+                and t1.api_code = #{inputFileDetail.apiCode}
+            </if>
+            <if test="inputFileDetail.taskType != null and inputFileDetail.taskType != 0 ">
+                and t1.task_type = #{inputFileDetail.taskType}
+            </if>
+        </where>
+    </select>
+    <select id="findInputFileDetailByTaskId"  resultMap="inputFileDetailVOMap" parameterType="com.biz.credit.vo.InputFileDetailVO">
+        select
+        t.input_file_detail_id,
+        t.input_file_id,
+        t.task_id,
+        t.name,
+        t.pdf_file_path,
+        t.pdf_file_name,
+        t.key_no,
+        t.status
+        from input_file_detail t
+        inner join task t1 on t.task_id=t1.task_id
+        <where>  1=1
+            <if test="inputFileDetail.taskId != null ">
+                and t.task_id = #{inputFileDetail.taskId}
+            </if>
+            <if test="inputFileDetail.userId != null ">
+                and t1.user_id = #{inputFileDetail.userId}
+            </if>
+            <if test="inputFileDetail.apiCode != null and inputFileDetail.apiCode != '' ">
+                and t1.api_code = #{inputFileDetail.apiCode}
+            </if>
+        </where>
+
+    </select>
+    <select id="findInputFileDetailParams" resultType="com.biz.credit.vo.InputFileDetailParamVO">
+        select d.flow_id, d.module_type_name as flow_name, d.module_type_id, a.code, a.name, a.type, a.required, a.value
+          from input_file_detail_params a
+         inner join input_file_detail b
+            on a.input_file_detail_id = b.input_file_detail_id
+         inner join task c
+            on c.task_id = b.task_id
+         inner join module_type d
+            on c.module_type_id = d.module_type_id
+         where a.input_file_detail_id = #{inputFileDetailId} and a.status = 1 order by a.id
+    </select>
+    <update id="updateFailedInputFileDetail" parameterType="com.biz.credit.domain.InputFileDetail">
+        update input_file_detail t
+        set
+        t.status = #{inputFileDetail.status},
+        t.last_update_time = now()
+        where t.input_file_detail_id = #{inputFileDetail.inputFileDetailId}
+    </update>
+</mapper>

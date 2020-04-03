@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.VariablePeriodDAO">
+
+  <select id="queryList" resultType="com.biz.credit.domain.VariablePeriod">
+      select id,period,period_unit,period_order,content from t_variable_period order by period_order
+  </select>
+    <select id="queryListByVarPeriodAndPeriodUnit" resultType="com.biz.credit.domain.VariablePeriod">
+        select id,period,period_unit,period_order,content from t_variable_period
+        where period=#{varPeriod}
+        <if test="varPeriod != -1">
+          and period_unit=#{periodUnit}
+        </if>
+        order by period_order
+    </select>
+    <select id="queryListByPeriodId" resultType="com.biz.credit.domain.VariablePeriod">
+        select id,period,period_unit,period_order,content from t_variable_period
+        where id=#{periodId}
+        order by period_order
+    </select>
+
+</mapper>

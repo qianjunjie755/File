@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.ScoreApiDAO">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="scoreApiVO.scoreApiId" parameterType="com.biz.credit.vo.ScoreApiVO">
+        insert into t_score_api(api_prod_code, api_version, score_card_id, status,var_id, var_code, var_version, var_name, feq, feq_unit, model_param_name, default_value, weight, condition_type, create_time, last_update_time, dimension_name)
+        values(#{scoreApiVO.apiProdCode},#{scoreApiVO.apiVersion},#{scoreApiVO.scoreCardId},#{scoreApiVO.status},#{scoreApiVO.varId},#{scoreApiVO.varCode},
+        #{scoreApiVO.varVersion},#{scoreApiVO.varName},#{scoreApiVO.feq},#{scoreApiVO.feqUnit},#{scoreApiVO.modelParamName},#{scoreApiVO.defaultValue},
+        #{scoreApiVO.weight},#{scoreApiVO.conditionType},now(),now(),#{scoreApiVO.dimensionName})
+    </insert>
+
+    <update id="updateStatusByScoreCardId">
+        update t_score_api set status = #{status}
+        where score_card_id = #{scoreCardId}
+    </update>
+    <resultMap id="nodeParam_list" type="com.biz.credit.domain.DNodeParam">
+        <result column="param_cfg_code" property="code"/>
+        <result column="GROUP_CONCAT(t.param_code)" property="fields"/>
+        <result column="param_name" property="name"/>
+        <result column="MAX(t.required)" property="required"/>
+    </resultMap>
+    <select id="queryByScoreCardId" resultMap="nodeParam_list">
+        SELECT t.param_cfg_code, t.param_name,GROUP_CONCAT(t.param_code), MAX(t.required) FROM (
+        SELECT DISTINCT n.param_code, c.param_cfg_code, d.param_name, d.param_type, d.param_order, n.required FROM (
+        select api_prod_code,api_version
+        from t_score_api
+        where score_card_id=#{scoreCardId} and status=1
+        GROUP BY api_prod_code,api_version) m
+        INNER JOIN (SELECT a.prod_code, a.version, b.param_code, b.param_name, b.required FROM api_admin.api a
+        INNER JOIN api_admin.api_request b ON a.id = b.api_id and b.status=1) n ON m.api_prod_code = n.prod_code AND m.api_version = n.version
+        INNER JOIN api_admin.api_request_map c ON n.param_code = c.param_code
+        INNER JOIN api_admin.api_param_cfg d ON c.param_cfg_code = d.param_code and d.status=1) t
+        GROUP BY param_cfg_code, param_name, param_type, param_order ORDER BY param_type, param_order;
+    </select>
+</mapper>

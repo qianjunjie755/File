@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.InputFileDAO">
+    <insert id="addInputFile"  useGeneratedKeys="true" keyProperty="inputFile.inputFileId" parameterType="com.biz.credit.domain.InputFile" >
+      insert into input_file
+      (input_file_name,
+      input_file_path,
+      user_id,
+      task_id,
+      success_count,
+      fail_count,
+      file_error_path,
+      file_error_name,
+      last_update_time,
+      create_time)
+      values (
+      #{inputFile.inputFileName},
+      #{inputFile.inputFilePath},
+      #{inputFile.userId},
+      #{inputFile.taskId},
+      #{inputFile.successCount},
+      #{inputFile.failCount},
+      #{inputFile.fileErrorPath},
+      #{inputFile.fileErrorName},
+      now(),
+      now())
+    </insert>
+
+    <update id="updateInputFile">
+        update input_file t
+        set
+        t.input_file_name = #{inputFile.inputFileName},
+        t.input_file_path = #{inputFile.inputFilePath},
+        t.user_id = #{inputFile.userId},
+        t.task_id = #{inputFile.taskId},
+        t.success_count = #{inputFile.successCount},
+        t.fail_count = #{inputFile.failCount},
+        t.file_error_path = #{inputFile.fileErrorPath},
+        t.file_error_name = #{inputFile.fileErrorName},
+        t.last_update_time = #{inputFile.lastUpdateTime}
+        where t.input_file_id = #{inputFile.inputFileId}
+    </update>
+
+    <resultMap id="inputFile_list"  type="com.biz.credit.domain.InputFile">
+        <result property="inputFileId" column="input_file_id" />
+        <result property="inputFilePath" column="input_file_path" />
+        <result property="userId" column="user_id" />
+        <result property="taskId" column="task_id" />
+        <result property="successCount" column="success_count" />
+        <result property="failCount" column="fail_count" />
+        <result property="fileErrorPath" column="file_error_path" />
+        <result property="fileErrorName" column="file_error_name" />
+        <result property="lastUpdateTime" column="last_update_time" />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+    <select id="findInputFileList" resultMap="inputFile_list" resultType="com.biz.credit.domain.InputFile">
+        select
+            t.input_file_name,
+            t.input_file_path,
+            t.user_id,
+            t.task_id,
+            t.success_count,
+            t.fail_count,
+            t.file_error_path,
+            date_format(t.last_update_time,'%Y-%m-%d %T') last_update_time,
+            date_format(t.create_time,'%Y-%m-%d %T') create_time
+        from input_file t
+        inner join task t1 on t.task_id=t1.task_id
+        <where>  1=1
+            <if test="inputFile.inputFileId != null and inputFile.inputFileId !=''">
+                and t.input_file_id = #{inputFile.inputFileId}
+            </if>
+            <if test="inputFile.taskId != null and inputFile.taskId !=''">
+                and t.task_id = #{inputFile.taskId}
+            </if>
+            <if test="inputFile.userId != null and inputFile.userId !=''">
+                and t.user_id = #{inputFile.userId}
+            </if>
+            <if test="inputFile.apiCode != null and inputFile.apiCode != ''">
+                and t1.api_code = #{inputFile.apiCode}
+            </if>
+        </where>
+        order by t.create_time desc
+    </select>
+</mapper>

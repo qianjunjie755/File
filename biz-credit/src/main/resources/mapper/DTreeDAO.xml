@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.DTreeDAO">
+    <resultMap id="tree_map" type="com.biz.credit.vo.DTreeVO">
+        <result column="tree_id" property="treeId" />
+        <result column="tree_name" property="treeName" />
+        <result column="tree_desc" property="treeDesc" />
+        <result column="tree_version" property="treeVersion" />
+        <result column="return_type" property="returnType"/>
+        <result column="return_field" property="returnField"/>
+        <result column="field_type" property="fieldType"/>
+        <result column="project_id" property="projectId"/>
+        <result column="api_code" property="apiCode"/>
+        <result column="user_id" property="userId"/>
+        <result column="status" property="status"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="has_period" property="hasPeriod" />
+    </resultMap>
+
+
+    <resultMap id="treeVar_map" type="com.biz.credit.domain.DTreeCond">
+        <result column="id" property="id" />
+        <result column="var_id" property="varId" />
+        <result column="variable_name" property="varName" />
+        <result column="cond_judge" property="condJudge" />
+        <result column="cond_order" property="condOrder"/>
+        <result column="out_value" property="outValue"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="tree_id" property="treeId"/>
+        <result column="status" property="status"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+    <resultMap id="tree_list" type="com.biz.credit.vo.DTreeVO">
+        <result column="name" property="projectName" />
+        <result column="tree_id" property="treeId" />
+        <result column="tree_name" property="treeName" />
+        <result column="tree_desc" property="treeDesc" />
+        <result column="tree_version" property="treeVersion" />
+        <result column="return_type" property="returnType"/>
+        <result column="return_field" property="returnField"/>
+        <result column="field_type" property="fieldType"/>
+        <result column="project_id" property="projectId"/>
+        <result column="api_code" property="apiCode"/>
+        <result column="user_id" property="userId"/>
+        <result column="has_period" property="hasPeriod" />
+        <result column="status" property="status"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="choose" property="choose"/>
+        <result column="type" property="type"/>
+        <result column="judge" property="judge"/>
+    </resultMap>
+    <insert id="insert" useGeneratedKeys="true" keyProperty="dTreeVO.treeId" parameterType="com.biz.credit.vo.DTreeVO">
+        insert into t_d_tree( tree_name, tree_version, tree_desc, return_type, return_field, field_type,project_id,
+        api_code, user_id, status, update_time,create_time,has_period)
+       values(#{dTreeVO.treeName},#{dTreeVO.treeVersion},#{dTreeVO.treeDesc},#{dTreeVO.returnType},#{dTreeVO.returnField},
+       #{dTreeVO.fieldType},#{dTreeVO.projectId},#{dTreeVO.apiCode},#{dTreeVO.userId},#{dTreeVO.status},now(),now(),#{dTreeVO.hasPeriod})
+    </insert>
+
+    <update id="update" parameterType="com.biz.credit.vo.DTreeVO">
+        update  t_d_tree t
+        SET
+        <if test="dTreeVO.treeName != null and dTreeVO.treeName != ''">
+            t.tree_name=#{dTreeVO.treeName},
+        </if>
+        <if test="dTreeVO.treeDesc != null">
+            t.tree_desc=#{dTreeVO.treeDesc},
+        </if>
+        <if test="dTreeVO.returnType != null">
+            t.return_type=#{dTreeVO.returnType},
+        </if>
+        <if test="dTreeVO.returnField != null">
+            t.return_field=#{dTreeVO.returnField},
+        </if>
+        <if test="dTreeVO.fieldType != null">
+            t.field_type=#{dTreeVO.fieldType},
+        </if>
+        <if test="dTreeVO.status != null">
+            t.status=#{dTreeVO.status},
+        </if>
+        <if test="dTreeVO.hasPeriod != null" >
+            t.has_period=#{dTreeVO.hasPeriod},
+        </if>
+        t.update_time=now()
+        where t.tree_id=#{dTreeVO.treeId}
+    </update>
+    <select id="queryById" resultMap="tree_map">
+        select t.tree_id,t.tree_name,t.tree_version,t.tree_desc,t.return_type,t.return_field,t.field_type,t.project_id,t.api_code,t.user_id,t.status,t.has_period,
+				t.update_time,t.create_time
+        from t_d_tree t
+        where t.tree_id = #{treeId}
+    </select>
+
+    <select id="queryVersionListByTreeName" parameterType="com.biz.credit.vo.DTreeVO" resultType="com.biz.credit.domain.DTree">
+        select t.tree_id,t.tree_name,t.tree_version,t.tree_desc,t.return_type,t.return_field,t.field_type,t.project_id,t.api_code,t.user_id,t.status,
+				t.update_time,t.create_time,t.has_period
+        from t_d_tree t
+        where  t.status !=2 and t.tree_name = #{dTreeVO.treeName} and t.project_id=#{dTreeVO.projectId} order by t.tree_version asc
+    </select>
+    <select id="queryTreeList" parameterType="com.biz.credit.vo.DTreeVO" resultMap="tree_list">
+        select * from
+        (select t.tree_id,t.tree_name,t.tree_version,t.tree_desc,t.return_type,t.return_field,t.field_type,t.project_id,t.api_code,
+        t.user_id,t.status,t.update_time,t.create_time,t.has_period
+        from t_d_tree t
+        where t.status !=2 and t.api_code=#{dTreeVO.apiCode}
+        <if test="dTreeVO.projectId != null">
+          and t.project_id = #{dTreeVO.projectId}
+        </if>
+        order by t.tree_version desc limit 99999999) a
+        group by tree_name order by update_time desc
+    </select>
+    <select id="queryTreeConfig"  resultMap="tree_list">
+         select p.name,t.tree_id,t.tree_name,t.tree_version,t.tree_desc,t.return_type,t.return_field,t.field_type,t.project_id,t.api_code,t.user_id,t.status,
+        t.update_time,t.create_time,t.has_period
+        from t_d_tree t
+		inner join t_project p on t.project_id=p.id and p.status=1
+        where t.status = 1 and t.api_code = #{apiCode}
+        order by p.name,t.tree_name ,t.tree_version asc
+    </select>
+    <select id="findTreeConfig" parameterType="com.biz.credit.domain.DNodeModel" resultMap="tree_list">
+       select  p.name,t.tree_id,t.tree_name,t.tree_version,t.tree_desc,t.return_type,t.return_field,t.field_type,t.project_id,t.api_code,t.user_id,t.status,
+        t.update_time,t.create_time,t.has_period,case when m.model_code is null then false else true end as choose,th.judge,th.type
+        from t_d_tree t
+        inner join t_project p on t.project_id=p.id and p.status=1
+        left join t_d_node_model m
+        on m.model_type =#{dNodeModel.modelType}
+        and m.node_id =#{dNodeModel.nodeId}
+        and m.model_code = t.tree_id and m.status = 1
+        left join t_d_threshold th on th.model_id = m.model_id
+        where t.status = 1 and t.api_code = #{dNodeModel.apiCode}
+        order by p.name,t.tree_name ,t.tree_version asc
+    </select>
+
+    <select id="existTreeName"  resultType="java.lang.Integer">
+        select count(*)
+        from t_d_tree
+        where  status != 2 and tree_name = #{treeName} and project_id=#{projectId}
+    </select>
+    <select id="queryMaxVersionByTreeName"  resultType="java.lang.Double">
+        select max(tree_version) from t_d_tree where status != 2 and  tree_name = #{treeName} and project_id=#{projectId}
+    </select>
+    <select id="queryTreeVersion" parameterType="com.biz.credit.vo.DTreeVO"  resultType="java.lang.Integer">
+        select count(*)
+        from t_d_tree
+        where tree_name = #{dTreeVO.treeName} and tree_version = #{dTreeVO.treeVersion} and project_id= #{dTreeVO.projectId};
+    </select>
+    <select id="queryVarByTreeId" parameterType="long"  resultMap="treeVar_map">
+        select t.id,t.var_id,t.cond_judge,t.cond_order,t.out_value,t.parent_id,t.tree_id,t.status,t.update_time,t.create_time
+        from t_d_tree_cond t
+        where  t.status =1 and t.tree_id = #{treeId};
+    </select>
+    <update id="deleteTreeByTreeId" >
+        update  t_d_tree t
+        SET
+            t.status=2,
+            t.update_time=now()
+        where t.tree_id=#{treeId}
+    </update>
+
+    <select id="queryListByProjectId" resultType="com.biz.credit.domain.DTree">
+        select t.tree_id,t.tree_name,t.tree_version,t.tree_desc,t.return_type,t.return_field,t.field_type,t.project_id,t.api_code,t.user_id,t.status,
+				t.update_time,t.create_time,t.has_period
+        from t_d_tree t
+        where t.project_id = #{projectId} and t.status != 2
+    </select>
+</mapper>

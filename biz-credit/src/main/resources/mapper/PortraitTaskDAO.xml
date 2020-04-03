@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.PortraitTaskDAO">
+    <insert id="insertTask" useGeneratedKeys="true" keyProperty="task.taskId" parameterType="com.biz.credit.domain.PortraitTask">
+      insert into t_portrait_task (task_id, task_name, task_type,
+      module_id, `interval`,
+      <if test="task.startDate != null and task.startDate != ''">
+        start_date,
+      </if>
+      <if test="task.endDate != null and task.endDate != ''">
+        end_date,
+      </if>
+      update_user, update_time, create_user,
+      create_time)
+      values (NULL , #{task.taskName}, #{task.taskType},
+      #{task.moduleId}, #{task.interval},
+      <if test="task.startDate != null and task.startDate != ''">
+        #{task.startDate},
+      </if>
+      <if test="task.endDate != null and task.endDate != ''">
+        #{task.endDate},
+      </if>
+      #{task.updateUser}, #{task.updateTime}, #{task.createUser},
+      #{task.createTime})
+    </insert>
+
+    <insert id="insertTaskLabelBatch" parameterType="com.biz.credit.domain.PortraitTaskLabel">
+      insert into t_portrait_task_label (task_id, label_id, status,
+      update_user, update_time, create_user,
+      create_time)
+      values
+      <foreach collection="list" item="taskLabel" index="index" separator=",">
+          (#{taskLabel.taskId}, #{taskLabel.labelId}, #{taskLabel.status},
+          #{taskLabel.updateUser}, #{taskLabel.updateTime}, #{taskLabel.createUser},
+          #{taskLabel.createTime})
+      </foreach>
+    </insert>
+
+    <update id="updateTaskLabelStatus">
+        update t_portrait_task_label
+        SET status = #{status},
+        update_user = #{userId},
+        update_time = now()
+        WHERE label_id = #{labelId}
+    </update>
+
+    <select id="findTasks" parameterType="com.biz.credit.vo.PortraitTaskQueryVO"
+            resultType="com.biz.credit.vo.PortraitTaskRespVO">
+        select
+        a.task_id,
+        a.task_name,
+        a.task_type,
+        CASE WHEN a.task_type=1 THEN a.interval
+        ELSE concat(date_format(a.start_date,'%Y-%m-%d'),"~",date_format(a.end_date,'%Y-%m-%d')) END task_interval,
+        b.module_id,
+        b.module_name,
+        a.status,
+        date_format(a.last_run_time,'%Y-%m-%d %T') last_run_time,
+        date_format(a.update_time,'%Y-%m-%d %T') update_time
+        from t_portrait_task a
+        LEFT JOIN t_system_module b ON a.module_id = b.module_id
+        <where>
+            <if test="param.moduleId != null">
+                AND b.module_id = #{param.moduleId}
+            </if>
+            <if test="param.taskName != null and param.taskName != ''">
+                AND a.task_name = #{param.taskName}
+            </if>
+            <if test="param.status != null">
+                AND a.status = #{param.status}
+            </if>
+        </where>
+    </select>
+
+    <select id="findTaskLabels" resultType="com.biz.credit.vo.PortraitTaskLabelRespVO">
+        select b.label_id,b.label_code,b.label_name
+        FROM t_portrait_task_label a
+        LEFT JOIN t_portrait_label b ON a.label_id = b.label_id
+        WHERE a.task_id = #{taskId}
+    </select>
+</mapper>

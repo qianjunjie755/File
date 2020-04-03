@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.ProjectDAO">
+
+    <select id="queryList" resultType="com.biz.credit.vo.ProjectVO">
+        select id,name,status,description,api_code,user_id from t_project
+        where status = 1 and api_code = #{project.apiCode}
+        <if test="project.name != null and project.name != ''">
+           and name like concat('%',#{project.name},'%')
+        </if>
+        order by create_time desc
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="project.id" parameterType="com.biz.credit.domain.Project">
+        insert into t_project(name, description, status,api_code,user_id, create_time
+        <if test="project.platformId !=null and project.platformId !=0">
+            ,platform_id
+        </if>
+        )values(#{project.name},#{project.description},#{project.status},#{project.apiCode},#{project.userId},now(),
+        <if test="project.platformId !=null and project.platformId !=0">
+            ,#{project.platformId}
+        </if>
+        )
+    </insert>
+    <update id="updateStatusByProjectId">
+        update t_project set status = #{status}
+        where id = #{projectId}
+    </update>
+
+    <select id="queryByProjectId" parameterType="long"  resultType="com.biz.credit.vo.ProjectVO">
+        select t.id,t.name,t.description,t.status
+        from t_project t
+        where t.id = #{projectId} AND t.status=1;
+    </select>
+
+    <select id="queryCountByName" parameterType="com.biz.credit.vo.ProjectVO" resultType="int">
+        select count(*) from t_project where api_code = #{projectVO.apiCode} and name = #{projectVO.name} and status = 1
+        <if test="projectVO.id != null">
+            and id != #{projectVO.id}
+        </if>
+    </select>
+    <select id="queryFirstProject" resultType="com.biz.credit.domain.Project">
+        select id, name, api_code, user_id, description, status
+         from t_project
+        where id = (select min(id) from t_project where api_code = #{apiCode} and status = 1)
+    </select>
+
+    <update id="update" parameterType="com.biz.credit.vo.ProjectVO">
+        update  t_project t
+        SET
+        <if test="project.name != null and project.name != ''">
+            t.name=#{project.name},
+        </if>
+        <if test="project.description != null and project.description != ''">
+            t.description=#{project.description},
+        </if>
+        <if test="project.platformId !=null and project.platformId !=0">
+            t.platform_id=#{project.platformId}
+        </if>
+        t.update_time=now()
+        where t.id=#{project.id}
+    </update>
+</mapper>

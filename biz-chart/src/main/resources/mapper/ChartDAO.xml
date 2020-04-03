@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.chart.repository.ChartDAO">
+    <select id="queryNodeType" resultType="com.biz.chart.entity.vo.NodeTypeVO">
+        select node_type, type_name from t_relation_node_type
+    </select>
+    <select id="queryRelationType" resultType="com.biz.chart.entity.vo.RelationTypeVO">
+        select b.group_id, b.group_name, b.group_code, a.ship_id as id, a.ship_name as name
+          from t_relation_ship a
+         inner join t_relation_group b
+            on a.group_id = b.group_id
+           and b.group_type = #{type}
+         where a.status = 1
+         order by b.group_code, b.group_id, a.ship_id
+    </select>
+    <select id="queryChartRelations" resultType="java.lang.String">
+        select t.chart_relations from t_chart t where t.chart_id = #{chartId}
+    </select>
+    <select id="queryRelationTypes" resultType="com.biz.chart.entity.RelationType">
+        select ship_id as id, ship_name as name from t_relation_ship t where t.ship_id in (${shipIds})
+    </select>
+    <select id="queryChartInput" resultType="java.lang.Long">
+        SELECT a.chart_id
+          FROM t_chart a
+         INNER JOIN t_chart_input b
+            ON a.chart_id = b.chart_id
+         WHERE a.api_code = #{input.apiCode}
+           AND a.chart_type = #{input.chartType}
+           AND a.chart_depth = #{input.chartDepth}
+           AND a.chart_threshold = #{input.chartThreshold}
+           AND a.chart_relations = #{input.chartRelations}
+           AND a.status = 1
+           AND a.create_time >= CURRENT_DATE()
+        <choose>
+            <when test="input.companyName != null and input.companyName != ''">
+                AND b.company_name = #{input.companyName}
+            </when>
+            <otherwise>
+                AND b.company_name is null
+            </otherwise>
+        </choose>
+        <choose>
+            <when test="input.name != null and input.name != ''">
+                AND b.name = #{input.name}
+            </when>
+            <otherwise>
+                AND b.name is null
+            </otherwise>
+        </choose>
+        <choose>
+            <when test="input.idNo != null and input.idNo != ''">
+                AND b.id_no = #{input.idNo}
+            </when>
+            <otherwise>
+                AND b.id_no is null
+            </otherwise>
+        </choose>
+         ORDER BY a.chart_id DESC LIMIT 1
+    </select>
+    <insert id="insertChart" useGeneratedKeys="true" keyProperty="chart.id">
+        insert into t_chart(chart_type, chart_depth, chart_threshold, chart_relations, api_code, user_id, status)
+        values (#{chart.type}, #{chart.depth}, #{chart.threshold}, #{chart.relations}, #{chart.apiCode}, #{chart.userId}, 0)
+    </insert>
+    <insert id="insertChartInput">
+        insert into t_chart_input(chart_id, company_name, name, id_no) values
+        <foreach collection="inputs" item="input" index="index" separator=",">
+            (#{chartId}, #{input.companyName}, #{input.name}, #{input.idNo})
+        </foreach>
+    </insert>
+    <update id="updateChart">
+        update t_chart set status = #{status}, update_time = current_timestamp() where chart_id = #{chartId}
+    </update>
+</mapper>

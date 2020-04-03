@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.warning.dao.RuleOperLogDAO">
+    <resultMap id="ruleOperLog_map" type="com.biz.warning.domain.RuleOperLog">
+        <result property="logId" column="log_id" />
+        <result property="ruleId" column="rule_id" />
+        <result property="operTime" column="oper_time" />
+        <result property="userId" column="user_id" />
+        <result property="userName" column="user_name" />
+        <result column="api_code" property="apiCode" />
+        <result property="operContent" column="oper_content" />
+        <result property="description" column="description" />
+        <result property="lastUpdateTime" column="last_update_time" />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+
+
+    <insert id="addRuleOperLog" useGeneratedKeys="true" keyProperty="ruleOperLog.logId"   parameterType="com.biz.warning.domain.RuleOperLog">
+        INSERT INTO t_rule_oper_log
+        (rule_id,
+        oper_time,
+        user_id,
+        user_name,
+        api_code,
+        oper_content,
+        description,
+        last_update_time,
+        create_time)
+        VALUES
+        (#{ruleOperLog.ruleId},now(),#{ruleOperLog.userId},#{ruleOperLog.userName},#{ruleOperLog.apiCode},#{ruleOperLog.operContent},#{ruleOperLog.description},now(),now())
+
+    </insert>
+
+    <select id="findRuleOperLog" resultMap="ruleOperLog_map" parameterType="long">
+      SELECT
+        t.log_id, t.rule_id ,t.oper_time, t.user_id,t.user_name,t.api_code, t.oper_content, t.description,
+        date_format(t.last_update_time,'%Y-%m-%d %T') last_update_time,
+        date_format(t.create_time,'%Y-%m-%d %T') create_time
+      FROM t_rule_oper_log t
+      WHERE
+       t.rule_id = #{ruleId} order by t.create_time desc
+    </select>
+
+
+</mapper>

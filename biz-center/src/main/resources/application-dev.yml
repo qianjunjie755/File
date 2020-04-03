@@ -1,0 +1,17 @@
+server:
+  port: 8761
+  application:
+    name: eureka-server
+
+spring:
+  application:
+    name: center-service
+
+eureka:
+  instance:
+    hostname: center
+  client:
+    registerWithEureka: false
+    fetchRegistry: false
+    serviceUrl:
+      defaultZone: http://center:8761/eureka/

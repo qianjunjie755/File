@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.DNodeRuleVarRefDAO">
+
+    <update id="updateStatusByNodeRuleVarId">
+        update t_d_node_rule_var_ref set status = #{status}
+        where node_var_id = #{varId}
+    </update>
+
+    <insert id="insertList" parameterType="java.util.List">
+        insert into t_d_node_rule_var_ref(src_var_id,var_period,period_unit,var_threshold,node_var_id,status,update_time,create_time)
+        values
+        <foreach collection ="refVarList" item="refVar" index="index" separator=",">
+            (#{refVar.srcVarId},#{refVar.varPeriod},#{refVar.periodUnit},#{refVar.varThreshold},#{refVar.nodeVarId},#{refVar.status},now(),now())
+        </foreach>
+    </insert>
+
+    <update id="updateList" parameterType="java.util.List">
+        <foreach collection="list" separator=";" item="var">
+            update t_d_node_rule_var_ref set
+            <if test="var.srcVarId != null">
+                src_var_id = #{var.srcVarId},
+            </if>
+            <if test="var.varThreshold != null">
+                var_threshold = #{var.varThreshold},
+            </if>
+            <if test="var.varPeriod != null">
+                var_period = #{var.varPeriod},
+            </if>
+            <if test="var.periodUnit != null">
+                period_unit = #{var.periodUnit},
+            </if>
+            <if test="var.nodeVarId != null">
+                node_var_id = #{var.nodeVarId},
+            </if>
+            update_time = now()
+            where var_id = #{var.varId}
+        </foreach>
+    </update>
+
+    <select id="queryAllSrcRefVars" resultType="com.biz.credit.vo.DNodeRuleVarRefVO">
+        SELECT a.var_id as src_var_id,
+        b.prod_code     AS prod_code,
+        b.version       AS version,
+        b.variable_name AS variable_name,
+        a.var_period,
+        a.period_unit,
+        a.var_threshold,
+        a.var_p_id,
+        b.description,b.prod_code,b.variable_name,b.variable_type_code,b.version
+        FROM t_variable_reference a
+        INNER JOIN t_variable_pool b
+        ON a.ref_p_id = b.variable_code
+        WHERE a.status = 1 order by a.var_id
+    </select>
+    <select id="querySrcRefVars" resultType="com.biz.credit.vo.DNodeRuleVarRefVO">
+        SELECT a.var_id AS src_var_id,
+        a.var_period,
+        a.period_unit,
+        a.var_threshold,
+        a.var_p_id,
+        b.variable_name,
+        b.description,b.*
+        FROM t_variable_reference a
+        LEFT JOIN t_variable_pool b ON a.ref_p_id=b.variable_code
+        WHERE  a.var_p_id = #{refPId}  AND  a.status = 1  ORDER BY a.var_id
+    </select>
+    <select id="queryInstanceRefVars" parameterType="com.biz.credit.vo.DNodeRuleVO" resultType="com.biz.credit.vo.DNodeRuleVarRefVO">
+        SELECT c.var_id,c.src_var_id,
+        b.prod_code     AS prod_code,
+        b.version       AS version,
+        b.variable_name AS variable_name,
+        c.var_period,
+        c.period_unit,
+        c.var_threshold,
+        c.node_var_id,
+        a.var_p_id,
+        b.description,b.prod_code,b.variable_name,b.variable_type_code,b.version
+        FROM t_d_node_rule_var_ref c
+        INNER JOIN t_d_node_rule_var nrv on nrv.var_id = c.node_var_id and nrv.status = 1
+        INNER JOIN t_d_node_rule nr on nr.rule_id = nrv.rule_id and nr.status = 1
+		INNER JOIN t_d_node_model nm on nm.model_id = nr.model_id and nm.status = 1 and nm.node_id = #{nodeRule.nodeId} and model_type = #{nodeRule.modelType}
+        INNER JOIN t_variable_reference a
+        ON a.var_id = c.src_var_id
+        INNER JOIN t_variable_pool b
+        ON a.ref_p_id = b.variable_code
+        WHERE a.status = 1 order by c.src_var_id
+    </select>
+
+</mapper>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.ClientDAO">
+    <insert id="addDFlow" useGeneratedKeys="true" keyProperty="dFlowVO.flowId">
+        insert into t_d_flow (flow_name, flow_desc, radar_id, related_p, api_code, user_id, status)
+        values(#{dFlowVO.flowName},#{dFlowVO.flowDesc},#{dFlowVO.radarId},#{dFlowVO.relatedP},#{dFlowVO.apiCode},#{dFlowVO.userId},1);
+    </insert>
+    <insert id="addDNode" useGeneratedKeys="true" keyProperty="dNodeVO.nodeId">
+        insert into t_d_node (node_name, node_desc, node_order, flow_id, exec_next_node,status)
+        values(#{dNodeVO.nodeName},#{dNodeVO.nodeDesc},#{dNodeVO.nodeOrder},#{dNodeVO.flowId},#{dNodeVO.execNextNode},1)
+    </insert>
+    <insert id="addDNodeModel" useGeneratedKeys="true" keyProperty="dNodeModel.modelId">
+        insert into t_d_node_model (model_type, model_code, node_id, status)
+        values(#{dNodeModel.modelType},#{dNodeModel.modelCode},#{dNodeModel.nodeId},1)
+    </insert>
+    <insert id="addDNodeApiVOList" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="id">
+        insert into t_d_node_api (api_prod_code, api_version, node_id, status)
+        values
+        <foreach collection="list"  item="item" separator="," index="index" >
+            (#{item.apiProdCode},#{item.apiVersion},#{item.nodeId},1)
+        </foreach>
+    </insert>
+    <insert id="addDNodeRuleList" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="ruleId">
+        insert into t_d_node_rule ( src_rule_id, rule_weight, calc_logic, model_id, status) VALUES
+        <foreach collection="list"  item="item" separator="," index="index" >
+            (#{item.srcRuleId},#{item.ruleWeight},#{item.calcLogic},#{item.modelId},1)
+        </foreach>
+    </insert>
+    <insert id="addDNodeRuleVarList" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="varId">
+        insert into t_d_node_rule_var ( src_var_id, var_period, period_unit, var_threshold, var_weight, rule_id, status)
+        values
+        <foreach collection="list"  item="item" separator="," index="index" >
+            (#{item.srcVarId},#{item.varPeriod},#{item.periodUnit},#{item.varThreshold},#{item.varWeight},#{item.ruleId},1)
+        </foreach>
+    </insert>
+    <insert id="addDNodeParamsVOList">
+        insert into t_d_node_params (code, name, fields, choose, required, node_id, status) VALUES
+        <foreach collection="list"  item="item" separator="," index="index" >
+            (#{item.code},#{item.name},#{item.fields},#{item.choose},#{item.required},#{item.nodeId},1)
+        </foreach>
+    </insert>
+    <select id="queryListByFlowId" resultType="com.biz.credit.vo.DNodeVO">
+        select node_id,node_name,node_desc,node_order,flow_id,exec_next_node,status from t_d_node
+        where flow_id = #{flowId} and status = 1 order by node_order
+    </select>
+    <select id="queryNodeModel" resultType="com.biz.credit.domain.DNodeModel">
+        select model_id, model_type, model_code, node_id, status, update_time, create_time from t_d_node_model
+        where node_id=#{nodeId} and status=1
+    </select>
+    <select id="queryDNodeRuleVOListByModelId" resultType="com.biz.credit.vo.DNodeRuleVO">
+        select  rule_id, src_rule_id, rule_weight, calc_logic, model_id, status, update_time, create_time from t_d_node_rule
+        where model_id=#{modelId} and status=1
+    </select>
+    <select id="queryDNodeRuleVarVOListByRuleIdList" resultType="com.biz.credit.vo.DNodeRuleVarVO">
+        select var_id, src_var_id, var_period, period_unit, var_threshold, var_weight, rule_id, status, update_time, create_time
+        from t_d_node_rule_var
+        where status=1
+        and rule_id in
+        <foreach collection="list" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+    <select id="queryFlowVOByFlowId" resultType="com.biz.credit.vo.DFlowVO">
+        select flow_id, flow_name, flow_desc, radar_id, related_p, api_code, user_id, status, update_time, create_time
+        from t_d_flow
+        where flow_id=#{flowId}
+    </select>
+    <select id="queryDNodeParamsVOListByNodeIdList" resultType="com.biz.credit.vo.DNodeParamsVO">
+        select  id, code, name, fields, choose, required, node_id, status, update_time, create_time from t_d_node_params
+        where status=1
+        and node_id in
+        <foreach collection="list" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+</mapper>

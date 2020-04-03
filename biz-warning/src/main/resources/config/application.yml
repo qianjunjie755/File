@@ -1,0 +1,7 @@
+spring:
+  profiles:
+    active: dev
+biz_server_id: 1
+se_query_wait_minutes: 10
+se_redis_prefix: "{biz_credit:strategy_engine:risk_warning:"
+se_redis_api_info_prefix: "{biz_credit:strategy_engine:apiInfo}:"

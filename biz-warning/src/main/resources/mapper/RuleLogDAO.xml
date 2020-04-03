@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.warning.dao.RuleLogDAO">
+    <insert id="addRuleLogList" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="ruleLogId" >
+      insert into risk_warning.t_rule_log (exec_time, rule_id, src_rule_id, rule_set_id, strategy_id, task_id, entity_id, description, last_update_time, create_time,hit,weight)
+      values
+        <foreach collection="list"  item="item" separator="," index="index">
+            (#{item.execTime},#{item.ruleId},#{item.srcRuleId},#{item.ruleSetId},#{item.strategyId},#{item.taskId},#{item.entityId},#{item.description},now(),now(),#{item.hit},#{item.weight})
+        </foreach>
+    </insert>
+</mapper>

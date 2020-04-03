@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.warning.dao.VariableParamPoolDAO">
+    <select id="findListByVariableCode" parameterType="java.lang.Long" resultType="com.biz.warning.domain.VariableParamPool">
+      select t.param_name paramName,t.handler from risk_warning.t_variable_param_pool t
+      inner join risk_warning.t_variable_param t1 on t1.param_id=t.param_code
+      where t1.variable_code=#{variableCode}
+    </select>
+    <select id="findListByVariableCodes" resultType="com.biz.warning.domain.VariableParamPool">
+        SELECT  DISTINCT description FROM risk_warning.t_variable_param_pool t
+        INNER JOIN risk_warning.t_variable_param t1 ON t1.param_id=t.param_code
+        WHERE t.param_template_code>0 and t1.variable_code in
+        <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <select id="findListByNameList" resultType="com.biz.warning.domain.VariableParamPool">
+        select t.description,param_template_code paramTemplateCode from risk_warning.t_variable_param_pool t
+        where t.param_name in
+        <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        order by t.param_template_code asc
+    </select>
+</mapper>

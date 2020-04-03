@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.DNodeThresholdDAO">
+    <insert id="insertList" parameterType="java.util.List">
+        INSERT INTO t_d_threshold(model_id, type, judge, create_time) VALUES
+        <foreach collection ="nodeThresholdList" item="threshold" index="index" separator=",">
+            (#{threshold.modelId},#{threshold.type},#{threshold.judge},now())
+        </foreach>
+    </insert>
+
+    <select id="queryListByNodeIdAndType" resultType="com.biz.credit.domain.DNodeThreshold">
+        select t.model_id,t.type,t.judge from t_d_threshold t
+        left join t_d_node_model nm on nm.model_id = t.model_id and nm.status = 1
+        where nm.model_type = #{modelType} and nm.node_id = #{nodeId} and status = 1
+    </select>
+
+
+    <select id="queryByNodeThreshold" parameterType="com.biz.credit.domain.DNodeModel"  resultType="com.biz.credit.domain.DNodeThreshold">
+        select t.model_id,t.type,t.judge,t.create_time,t1.status,t1.model_code as modelCode
+        from t_d_threshold t
+        inner join t_d_node_model t1 on t1.model_id=t.model_id and t1.status=1
+        WHERE t1.node_id =#{dNodeModel.nodeId}
+        <if test="null != dNodeModel.modelType">
+            and t1.model_type=#{dNodeModel.modelType}
+        </if>
+        <if test="null != dNodeModel.modelCode">
+            and t1.model_code=#{dNodeModel.modelCode}
+        </if>
+    </select>
+    <insert id="insert" parameterType="com.biz.credit.domain.DNodeThreshold">
+        INSERT INTO t_d_threshold(model_id, type, judge, create_time) VALUES
+            (#{dNodeThreshold.modelId},#{dNodeThreshold.type},#{dNodeThreshold.judge},now())
+    </insert>
+
+    <delete id="deleteByModelId">
+        delete from t_d_threshold where model_id = #{modelId}
+    </delete>
+
+</mapper>
+

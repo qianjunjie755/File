@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.IndustryInfoApiDAO">
+    <insert id="addIndustryInfoApi" useGeneratedKeys="true" keyProperty="">
+        insert into industry_info_api (industry_id, module_type_id, api_code)
+        values (#{industryInfoApi.industryId},#{industryInfoApi.moduleTypeId},#{industryInfoApi.apiCode})
+    </insert>
+    <select id="findCountByIndustryInfoApi" resultType="java.lang.Integer">
+        select count(1) from industry_info_api where industry_id=#{industryInfoApi.industryId} and api_code = #{industryInfoApi.apiCode}
+        and module_type_id=#{industryInfoApi.moduleTypeId}
+    </select>
+</mapper>

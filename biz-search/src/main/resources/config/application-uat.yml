@@ -1,0 +1,70 @@
+server:
+  port: 8770
+  servlet:
+    context-path: /search
+    session:
+      cookie:
+        path: /
+        domain: 10.0.110.196
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: 10.0.110.196:${server.port}
+  client:
+    serviceUrl:
+      defaultZone: http://center1:8761/eureka/,http://center2:8761/eureka/
+
+spring:
+  application:
+    name: search-service
+  compression:
+    enabled: true
+    min-response-size: 10240
+    mime-types:
+      - image/png
+      - image/jpeg
+      - image/jpg
+      - text/html
+      - application/javascript
+      - text/css
+      - application/octet-stream
+      - application/json
+  redis:
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+        max-wait: -1ms
+    timeout: 10000ms
+    host: 10.0.110.196
+    port: 6879
+    database: 0
+    password: "1rWDb$xh#I8T"
+  datasource:
+    name: test
+    url: jdbc:mysql://10.0.110.219:3306/report?useAffectedRows=true&rewriteBatchedStatements=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true
+    username: bairong
+    password: BaiRong@100credit.com
+  servlet:
+    multipart:
+      max-request-size: 100MB
+      max-file-size: 100MB
+  data:
+    elasticsearch:
+      cluster-name: ES-Cluster
+      cluster-nodes: 10.0.110.194:9300,10.0.110.195:9300,10.0.110.197:9300
+
+#分页插件
+pagehelper:
+  helperDialect: mysql
+  reasonable: true
+  supportMethodsArguments: true
+  params: count=countSql
+  returnPageInfo: check
+
+biz:
+  api-code: 600028
+  task-crontab:
+    load-basic-info: "0 0 1 * * *"

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.DScoreLevelDAO">
+
+    <insert id="insert" parameterType="com.biz.credit.domain.DScoreLevel">
+        INSERT INTO t_d_score_level(
+        api_code,
+        model_code,
+        model_type,
+        score_level,
+        score_range)
+        VALUES (
+        #{scoreLevel.apiCode},
+        #{scoreLevel.modelCode},
+        #{scoreLevel.modelType},
+        #{scoreLevel.scoreLevel},
+        #{scoreLevel.scoreRange})
+    </insert>
+
+    <insert id="insertBatch" parameterType="java.util.List">
+        INSERT INTO t_d_score_level(
+        api_code,
+        model_code,
+        model_type,
+        score_level,
+        score_range)
+        VALUES
+        <foreach collection="list" item="scoreLevel" index="index" separator=",">
+            (
+            #{scoreLevel.apiCode},
+            #{scoreLevel.modelCode},
+            #{scoreLevel.modelType},
+            #{scoreLevel.scoreLevel},
+            #{scoreLevel.scoreRange}
+            )
+        </foreach>
+    </insert>
+
+    <delete id="deleteByCondition">
+        DELETE FROM t_d_score_level
+        WHERE api_code=#{apiCode} AND model_code=#{modelCode} AND model_type=#{modelType}
+    </delete>
+
+    <select id="findByCondition" resultType="com.biz.credit.domain.DScoreLevel">
+        SELECT * from t_d_score_level
+        WHERE api_code=#{apiCode} AND model_code=#{modelCode} AND model_type=#{modelType}
+    </select>
+</mapper>

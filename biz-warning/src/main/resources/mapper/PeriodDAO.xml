@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.warning.dao.PeriodDAO">
+    <resultMap id="period_map" type="com.biz.warning.domain.Period">
+        <result property="id" column="id" />
+        <result property="period" column="period" />
+        <result property="periodUnit" column="period_unit" />
+        <result property="order" column="order" />
+        <result property="content" column="content" />
+    </resultMap>
+
+
+    <select id="findAllPeriod" resultMap="period_map">
+        SELECT * from t_variable_period
+    </select>
+
+
+</mapper>

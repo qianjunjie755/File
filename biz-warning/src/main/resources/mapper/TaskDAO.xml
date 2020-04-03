@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.warning.dao.TaskDAO">
+    <resultMap id="task_vo"  type="com.biz.warning.vo.TaskVO">
+        <result column="task_id" property="taskId" />
+        <result column="task_no" property="taskCode" />
+        <result column="task_name" property="taskName" />
+        <result column="business_code" property="businessCode" />
+        <result column="strategy_id" property="strategyVO.strategyId" />
+        <result column="task_status" property="taskStatus" />
+        <result column="description" property="description" />
+        <result column="last_update_time" property="lastUpdateTime" />
+        <result column="create_time" property="createTime" />
+        <result column="business_code" property="businessCode" />
+    </resultMap>
+    <insert useGeneratedKeys="true" keyProperty="task.taskId" id="addTask"  parameterType="com.biz.warning.vo.TaskVO">
+        insert into risk_warning.t_task (task_code, task_name,business_code, strategy_id, task_status, description, last_update_time, create_time,user_id,api_code,entity_template_name)
+        values
+        (#{task.taskCode},#{task.taskName},#{task.businessCode},#{task.strategyId},#{task.taskStatus},#{task.description},now(),now(),#{task.userId},#{task.apiCode},#{task.entityTemplateName})
+    </insert>
+    <update id="updateTask" parameterType="com.biz.warning.vo.TaskVO">
+        update risk_warning.t_task set task_name=#{task.taskName},description=#{task.description},entity_template_name=#{task.entityTemplateName},business_code=#{task.businessCode},last_update_time=now(),
+            strategy_id=#{task.strategyId}
+        where task_id=#{task.taskId} and user_id=#{task.userId}
+    </update>
+
+    <update id="updateTaskNameBCDescriptionStrategyId" parameterType="com.biz.warning.vo.TaskVO">
+        update risk_warning.t_task set task_name=#{task.taskName},description=#{task.description},business_code=#{task.businessCode},strategy_id=#{task.strategyId},last_update_time=now()
+        where task_id=#{task.taskId} and user_id=#{task.userId}
+    </update>
+
+    <update id="updateTaskStatus" parameterType="com.biz.warning.vo.TaskVO">
+        update t_task set task_status=#{task.taskStatus},last_update_time=now()
+        where task_id=#{task.taskId}
+    </update>
+    <update id="updateTaskForTemplateNameBuild"  parameterType="com.biz.warning.vo.TaskVO">
+      update risk_warning.t_task set entity_template_name=#{task.entityTemplateName} where task_id=#{task.taskId}
+    </update>
+    <select id="findListByTaskVO" resultMap="task_vo" parameterType="com.biz.warning.vo.TaskVO" >
+        select t.task_id , t.task_code , t.task_name , t.strategy_id , t.task_status , t.description , t.last_update_time , t.create_time , t.business_code
+        from risk_warning.t_task t
+        where t.task_status != 3
+        <if test="null != taskVO.apiCode and '' != taskVO.apiCode">
+            and t.api_code=#{taskVO.apiCode}
+        </if>
+        <if test="null != taskVO.taskCode and ''!= taskVO.taskCode"  >
+            and t.task_code=#{taskVO.taskCode}
+        </if>
+        <if test="null != taskVO.taskName and '' != taskVO.taskName">
+            and t.task_name like concat('%',concat(#{taskVO.taskName},'%'))
+        </if>
+        <if test="null != taskVO.startDateStr and '' != taskVO.startDateStr">
+            and t.create_time &gt;= #{taskVO.startDateStr}
+        </if>
+        <if test="null != taskVO.endDateStr and '' != taskVO.endDateStr">
+            and t.create_time &lt;=#{taskVO.endDateStr}
+        </if>
+        <if test="null != taskVO.taskStatus">
+            and t.task_status = #{taskVO.taskStatus}
+        </if>
+        <if test="null != taskVO.ids and '' != taskVO.ids">
+            and t.user_id in
+            <foreach collection="taskVO.idList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+         order by t.task_id desc
+    </select>
+    <select id="findListByMinTaskId" resultType="com.biz.warning.vo.TaskVO">
+        select a.task_id taskId,a.task_name taskName,a.strategy_id strategyId,b.exec_interval execInterval,a.api_code, a.user_id
+        from risk_warning.t_task a
+        inner join risk_warning.t_strategy b on a.strategy_id= b.strategy_id
+        where task_id &gt; #{minTaskId} and task_status=1 order by task_id asc
+    </select>
+    <select id="findByTask" resultType="com.biz.warning.vo.TaskVO">
+        select t.task_id taskId, t.task_code taskCode, t.task_name taskName,
+        t.strategy_id strategyId, t.task_status taskStatus, t.description description,
+        t.last_update_time lastUpdateTime, t.create_time createTime, t.business_code businessCode,t.api_code apiCode,t.user_id userId,
+        t.entity_template_name entityTemplateName
+        from risk_warning.t_task t
+        where t.task_id=#{task.taskId}
+        <if test="task.apiCode != null">
+            <![CDATA[ AND t.api_code = #{task.apiCode}]]>
+        </if>
+        <if test="task.idList != null and task.idList.size > 0">
+            <![CDATA[ AND t.user_id in ]]>
+            <foreach collection="task.idList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+    <select id="findRuleSetListByTask" resultType="com.biz.warning.vo.RuleSetVO" parameterType="com.biz.warning.vo.TaskVO">
+        select t.rule_set_id,t.rule_set_name,t.src_rule_set_id, t.priority from risk_warning.t_rule_set t
+            inner join risk_warning.t_strategy_rule_set t1 on t1.rule_set_id=t.rule_set_id
+            inner join risk_warning.t_task t2 on t2.strategy_id=t1.strategy_id
+        where t2.task_id = #{task.taskId}
+          and t2.api_code = #{task.apiCode}
+        <if test="task.idList != null and task.idList.size > 0">
+          and t2.user_id in
+          <foreach collection="task.idList"  item="userId" separator="," open="(" close=")" index="index">
+            #{userId}
+          </foreach>
+        </if>
+        order by t.rule_set_id asc;
+    </select>
+    <select id="getHeadListByTaskId" resultType="java.lang.String">
+        SELECT t.entity_template_name FROM t_task t WHERE t.task_id = #{taskId};
+    </select>
+    <select id="queryTasksByApiCode" resultType="com.biz.warning.vo.ParamVO">
+        SELECT distinct a.task_id,
+               a.task_name,
+               h.param_code as `code`,
+               h.param_name as `name`,
+               h.param_type as `type`,
+               f.required
+          FROM t_task a
+         inner join t_strategy b
+            on a.strategy_id = b.strategy_id
+           and b.strategy_status = 1
+         inner join t_strategy_rule_set c
+            on b.strategy_id = c.strategy_id
+         inner join t_rule_set d
+            on c.rule_set_id = d.rule_set_id
+         inner join api_admin.api e
+            on d.api_prod_code = e.prod_code
+           and d.api_version = e.version
+         inner join api_admin.api_request f
+            on e.id = f.api_id
+           and f.status = 1
+         inner join api_admin.api_request_map g
+            on f.param_code = g.param_code
+         inner join api_admin.api_param_cfg h
+            on g.param_cfg_code = h.param_code
+           and h.status = 1
+         WHERE a.api_code = #{apiCode}
+           AND a.task_status = 1
+         ORDER BY a.task_id, h.param_order
+    </select>
+    <select id="queryEntityCount" resultType="java.lang.Integer">
+        select count(1) entityName from t_entity where api_code = #{apiCode} and entity_name = #{entityName} and entity_status=1
+    </select>
+
+</mapper>

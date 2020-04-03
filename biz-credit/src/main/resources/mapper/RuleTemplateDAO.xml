@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.RuleTemplateDAO">
+    <insert id="addRuleTemplateByList" useGeneratedKeys="true" keyProperty="id" >
+      insert into rule_template (rule_name, version, logic, weight,source_id)
+      values
+        <foreach collection="list"  item="item" separator="," index="index">
+            (#{item.ruleName},#{item.version},#{item.logic},#{item.weight},#{item.sourceId})
+        </foreach>
+    </insert>
+    <select id="findListByModuleTypeId" resultType="com.biz.credit.domain.RuleTemplate">
+        select t.id,t.rule_name ruleName,t.version,t.weight,t.logic from rule_template t inner join module_type_rule t1 on t1.rule_id=t.id
+        where t1.module_type_id=#{moduleTypeId} order by t.id asc
+    </select>
+</mapper>

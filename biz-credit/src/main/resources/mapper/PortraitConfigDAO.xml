@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.PortraitConfigDAO">
+
+    <select id="findSystemModules" resultType="com.biz.credit.vo.SystemModuleRespVO">
+        select module_id,module_name from t_system_module where status=1
+    </select>
+
+    <select id="findSingleModule" resultType="com.biz.credit.vo.SystemModuleRespVO">
+        select module_id,module_name from t_system_module where module_id=#{moduleId} AND status=1
+    </select>
+
+    <insert id="insertType" useGeneratedKeys="true" keyProperty="type.typeId" parameterType="com.biz.credit.domain.PortraitType">
+      insert into t_portrait_type (type_id, type_code, type_name,
+      module_id, status, parent_id,
+      update_user, update_time, create_user,
+      create_time)
+      values (null, #{type.typeCode}, #{type.typeName},
+      #{type.moduleId}, #{type.status}, #{type.parentId},
+      #{type.updateUser}, #{type.updateTime}, #{type.createUser},
+      #{type.createTime})
+    </insert>
+
+    <select id="findPortraitTypeGroup" parameterType="com.biz.credit.vo.PortraitTypeGroupQueryVO"
+            resultType="com.biz.credit.vo.PortraitTypeGroupRespVO">
+        select a.type_id,
+        a.type_code,
+        a.type_name,
+        b.module_id,
+        b.module_name,
+        a.status,
+        date_format(a.update_time,'%Y-%m-%d %T') update_time
+        from t_portrait_type a
+        LEFT JOIN t_system_module b on a.module_id=b.module_id
+        <where>
+            a.parent_id = -1
+            <if test="param.moduleId != null and param.moduleId > 0">
+                AND b.module_id = #{param.moduleId}
+            </if>
+            <if test="param.typeCode != null and param.typeCode != ''">
+                AND a.type_code = #{param.typeCode}
+            </if>
+            <if test="param.typeName != null and param.typeName != ''">
+                AND a.type_name = #{param.typeName}
+            </if>
+            <if test="param.status != null">
+                AND a.status = #{param.typeCode}
+            </if>
+            <if test="param.updateTime != null and param.updateTime != ''">
+                AND date_format(a.update_time,'%Y-%m-%d') = #{param.updateTime}
+            </if>
+        </where>
+        ORDER BY a.update_time DESC
+    </select>
+
+    <resultMap id="portraitType_map" type="com.biz.credit.vo.PortraitTypeRespVO">
+        <id column="type_id" jdbcType="INTEGER" property="typeId" />
+        <result column="type_code" jdbcType="VARCHAR" property="typeCode" />
+        <result column="type_name" jdbcType="VARCHAR" property="typeName" />
+        <collection property="children" javaType="java.util.ArrayList" columnPrefix="children_"
+                    ofType="com.biz.credit.vo.PortraitTypeRespVO">
+            <id column="type_id" jdbcType="INTEGER" property="typeId" />
+            <result column="type_code" jdbcType="VARCHAR" property="typeCode" />
+            <result column="type_name" jdbcType="VARCHAR" property="typeName" />
+        </collection>
+    </resultMap>
+
+    <select id="findPortraitTypes" resultMap="portraitType_map">
+      SELECT a.type_id,a.type_code,a.type_name,
+      b.type_id children_type_id,
+      b.type_code children_type_code,
+      b.type_name children_type_name
+      FROM t_portrait_type a
+      LEFT JOIN t_portrait_type b ON a.type_id=b.parent_id
+      WHERE a.parent_id = -1
+        <if test="moduleId != null and moduleId > 0">
+            AND a.module_id = #{moduleId}
+        </if>
+    </select>
+
+    <select id="findSingleType" resultType="com.biz.credit.vo.PortraitTypeVO">
+        SELECT type_id, type_code, type_name,
+        module_id, status, parent_id,
+        update_user, create_user,
+        date_format(update_time,'%Y-%m-%d %T') update_time,
+        date_format(create_time,'%Y-%m-%d %T') create_time
+        from t_portrait_type where type_id=#{typeId}
+    </select>
+
+    <select id="findTypeByBatch" resultType="com.biz.credit.vo.PortraitTypeVO">
+        SELECT type_id, type_code, type_name,
+        module_id, status, parent_id,
+        update_user, create_user,
+        date_format(update_time,'%Y-%m-%d %T') update_time,
+        date_format(create_time,'%Y-%m-%d %T') create_time
+        from t_portrait_type where type_id IN
+        <foreach collection="typeIds" item="typeId" index="index" open="(" separator="," close=")">
+            #{typeId}
+        </foreach>
+    </select>
+
+    <update id="updateParentIdByTypeId">
+        UPDATE t_portrait_type
+        SET parent_id = #{typeId},update_user=#{userId}
+        WHERE type_id in
+        <foreach collection="children" item="id" index="index" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <select id="findSingleLabel" resultType="com.biz.credit.domain.PortraitLabel">
+        select label_id, label_code, label_name, label_desc, label_type, label_enum, type_id,
+        table_name, calc_logic, status, update_user, create_user,
+        date_format(update_time,'%Y-%m-%d %T') update_time,
+        date_format(create_time,'%Y-%m-%d %T') create_time
+        from t_portrait_label where label_id=#{labelId}
+    </select>
+
+    <insert id="insertLabel" useGeneratedKeys="true" keyProperty="label.labelId" parameterType="com.biz.credit.domain.PortraitLabel">
+      insert into t_portrait_label (label_id, label_code, label_name,
+      label_desc, label_type, label_enum,
+      type_id, table_name, calc_logic,
+      update_user, update_time,
+      create_user, create_time)
+      values (NULL , #{label.labelCode}, #{label.labelName},
+      #{label.labelDesc}, #{label.labelType}, #{label.labelEnum},
+      #{label.typeId}, #{label.tableName}, #{label.calcLogic},
+      #{label.updateUser}, #{label.updateTime},
+      #{label.createUser}, #{label.createTime})
+    </insert>
+
+    <update id="updateLabel" parameterType="com.biz.credit.domain.PortraitLabel">
+      update t_portrait_label
+      set label_code = #{label.labelCode},
+      label_name = #{label.labelName},
+      label_desc = #{label.labelDesc},
+      label_type = #{label.labelType},
+      label_enum = #{label.labelEnum},
+      type_id = #{label.typeId},
+      table_name = #{label.tableName},
+      calc_logic = #{label.calcLogic},
+      update_user = #{label.updateUser},
+      update_time = #{label.updateTime}
+      where label_id = #{label.labelId}
+    </update>
+
+    <update id="updateLabelStatus">
+      update t_portrait_label
+      set status = #{status},
+      update_user = #{userId},
+      update_time = now()
+      where label_id = #{labelId}
+    </update>
+
+    <select id="findPortraitLabels" resultType="com.biz.credit.vo.PortraitLabelRespVO">
+        select
+        a.label_id,
+        a.label_code,
+        a.label_name,
+        a.label_desc,
+        b.type_name,
+        c.type_name sub_type_name,
+        a.status,
+        date_format(a.update_time,'%Y-%m-%d %T') update_time
+        from t_portrait_label a
+        LEFT JOIN t_portrait_type b on a.type_id = b.type_id
+        LEFT JOIN t_portrait_type c ON b.parent_id = c.type_id
+        <where>
+            <if test="labelCode != null and labelCode != ''">
+                AND a.label_code = #{labelCode}
+            </if>
+            <if test="labelName != null and labelName != ''">
+                AND a.label_name = #{labelName}
+            </if>
+            <if test="status != null">
+                AND a.status = #{status}
+            </if>
+        </where>
+    </select>
+
+    <select id="findLabelsByBatch" resultType="com.biz.credit.vo.PortraitLabelRespVO">
+        select
+        label_id,
+        label_code,
+        label_name,
+        label_desc,
+        status,
+        date_format(update_time,'%Y-%m-%d %T') update_time
+        from t_portrait_label
+        WHERE label_id in
+        <foreach collection="labelIds" item="labelId" index="index" open="(" separator="," close=")">
+            #{labelId}
+        </foreach>
+    </select>
+</mapper>

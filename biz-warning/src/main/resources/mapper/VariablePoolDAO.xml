@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.warning.dao.VariablePoolDAO">
+    <resultMap id="variable_pool_map" type="com.biz.warning.domain.VariablePool">
+        <result property="variableCode" column="variable_code" />
+        <result property="paramName" column="prod_code" />
+        <result property="variableName" column="variable_name" />
+        <result property="variableTypeCode" column="variable_type_code" />
+        <result property="version" column="version" />
+        <result property="dataType" column="data_type" />
+        <result property="defaultThreshold" column="default_threshold" />
+        <result property="dataSource" column="data_source" />
+        <result property="apiProdCode" column="api_prod_code" />
+        <result property="apiVersion" column="api_version" />
+        <result property="valid" column="valid" />
+        <result property="description" column="description" />
+        <result property="lastUpdateTime" column="last_update_time" />
+        <result property="createTime" column="create_time" />
+        <result property="queryUrl" column="query_url" />
+        <result property="resultUrl" column="result_url" />
+        <result property="priority" column="priority" />
+
+    </resultMap>
+
+    <select id="findByApiProdCode" resultMap="variable_pool_map">
+        SELECT
+        t.variable_code,t.variable_name,t.version, t.variable_type_code,t.description
+        FROM t_variable_pool t
+        WHERE t.api_prod_code = #{apiProdCode}
+    </select>
+
+</mapper>

@@ -1,0 +1,17 @@
+server:
+  port: 8761
+
+spring:
+  application:
+    name: center-service
+
+eureka:
+  instance:
+    hostname: center
+  client:
+    #registerWithEureka: true
+    #fetchRegistry: true
+    serviceUrl:
+      #如果是多机集群，那么启动summerhost，此处配置为http://cenruyu:8761/eureka/   cenruyu=172.17.108.253
+      #目前暂用单机
+      defaultZone: http://summerhost:8761/eureka/

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.ReportPluginDAO">
+    <insert id="insertDecideEntityBasicInfo">
+                <![CDATA[INSERT INTO t_entity_basic_info
+    (entity_id,
+     company_name,
+     credit_code,
+     regist_no,
+     regist_capital,
+     company_status,
+     create_time,
+     legal_person_name,
+     regist_address,
+     biz_scope)
+    VALUES (#{entityBasic.entityId},
+        #{entityBasic.companyName},
+            #{entityBasic.creditCode},
+            #{entityBasic.registNo},
+            #{entityBasic.registCapital},
+            #{entityBasic.companyStatus},
+            #{entityBasic.createTime},
+            #{entityBasic.legalPersonName},
+            #{entityBasic.registAddress},
+            #{entityBasic.bizScope})]]>
+    </insert>
+    <update id="updateDecideTask">
+          <![CDATA[UPDATE task t
+    SET t.task_status = #{status},
+        t.last_update_time = now()
+    WHERE t.task_id = #{taskId}]]>
+    </update>
+    <update id="updateDecideEntityBasicInfo">
+                <![CDATA[UPDATE t_entity_basic_info
+    SET company_name = #{entityBasic.companyName},
+        credit_code = #{entityBasic.creditCode},
+        regist_no = #{entityBasic.registNo},
+        regist_capital = #{entityBasic.registCapital},
+        company_status = #{entityBasic.companyStatus},
+        create_time = #{entityBasic.createTime},
+        legal_person_name = #{entityBasic.legalPersonName},
+        regist_address = #{entityBasic.registAddress},
+        biz_scope = #{entityBasic.bizScope},
+        update_time = CURRENT_TIMESTAMP()
+    WHERE entity_id = #{entityBasic.entityId}]]>
+    </update>
+    <update id="updateInput">
+    <![CDATA[UPDATE input_file_detail t
+    SET t.pdf_file_path = #{filePath},
+        t.pdf_file_name = #{fileName},
+        t.status = #{status},
+        t.last_update_time = now()
+    WHERE t.input_file_detail_id = #{inputId}]]>
+    </update>
+    <update id="update3rdInput">
+            <![CDATA[UPDATE api_input_file_detail t
+    SET t.pdf_file_path = #{filePath},
+        t.pdf_file_name = #{fileName},
+        t.status = #{status},
+        t.last_update_time = now()
+    WHERE t.input_file_detail_id = #{inputId}]]>
+    </update>
+</mapper>

@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.warning.dao.StatisticDAO">
+    <select id="queryTimeScope" resultType="com.biz.warning.domain.TimeScope">
+        <![CDATA[SELECT type AS scope, type_desc AS name FROM t_statistic_type ORDER BY type_order]]>
+    </select>
+    <delete id="deleteVarDaily">
+        <![CDATA[DELETE FROM t_statistic_d WHERE hit_date >= #{date}]]>
+    </delete>
+    <insert id="statisticVarDaily">
+        <![CDATA[INSERT INTO t_statistic_d (hit_date, source_id, hit_count, entity_id, user_id, api_code)
+                 SELECT DATE(a.hit_time) AS hit_date,
+                        c.source_id,
+                        COUNT(1) AS hit_count,
+                        a.entity_id,
+                        b.user_id,
+                        b.api_code
+                   FROM t_warn_result_variable a
+                  INNER JOIN t_entity b
+                     ON a.entity_id = b.entity_id
+                  INNER JOIN t_variable_pool c
+                     ON a.variable_code = c.variable_code
+                    AND c.valid = 1
+                  WHERE a.hit_time >= #{date}
+                    AND c.source_id IS NOT NULL
+                  GROUP BY DATE(a.hit_time), c.source_id, a.entity_id, b.user_id, b.api_code]]>
+    </insert>
+    <delete id="deleteVarNearly">
+        <![CDATA[DELETE FROM t_statistic_n WHERE type = #{type}]]>
+    </delete>
+    <insert id="statisticVarNearly">
+        <![CDATA[INSERT INTO t_statistic_n (type, source_id, entity_id, user_id, api_code, hit_count)
+                 SELECT #{type} AS type,
+                        a.source_id,
+                        a.entity_id,
+                        a.user_id,
+                        a.api_code,
+                        SUM(hit_count) AS hit_count
+                   FROM (SELECT source_id,
+                                entity_id,
+                                user_id,
+                                api_code,
+                                hit_count
+                           FROM t_statistic_d
+                          WHERE 1 = 1]]>
+        <if test="startTime != null and endTime != null">
+            <![CDATA[ AND hit_date >= #{startTime} AND hit_date <= #{endTime}]]>
+        </if>
+        <![CDATA[) a GROUP BY a.source_id, a.entity_id, a.user_id, a.api_code]]>
+    </insert>
+    <select id="queryVarDailyByEntityId" resultType="com.biz.warning.vo.StatitscVO">
+        <![CDATA[SELECT b.id,
+                        DATE_FORMAT(a.hit_date, '%Y-%m-%d') AS hit_date,
+                        a.source_id,
+                        a.hit_count,
+                        a.entity_id,
+                        a.user_id,
+                        a.api_code
+                   FROM (SELECT DATE(a.hit_time) AS hit_date,
+                                c.source_id,
+                                COUNT(1)    AS hit_count,
+                                a.entity_id,
+                                b.user_id,
+                                b.api_code
+                           FROM t_warn_result_variable a
+                          INNER JOIN t_entity b
+                             ON a.entity_id = b.entity_id
+                          INNER JOIN t_variable_pool c
+                             ON a.variable_code = c.variable_code
+                            AND c.valid = 1
+                          WHERE a.hit_time >= #{date}
+                            AND a.entity_id = #{entityId}
+                            AND c.source_id IS NOT NULL
+                          GROUP BY DATE(a.hit_time), c.source_id, a.entity_id, b.user_id, b.api_code) a
+                   LEFT JOIN t_statistic_d b
+                     ON a.hit_date = b.hit_date
+                    AND a.entity_id = b.entity_id
+                    AND a.source_id = b.source_id]]>
+    </select>
+    <update id="updateVarDailyByEntity">
+        <![CDATA[UPDATE t_statistic_d t
+                    SET t.hit_count = #{data.hitCount},
+                        t.create_time = CURRENT_TIMESTAMP()
+                  WHERE t.id = #{data.id}]]>
+    </update>
+    <insert id="insertVarDailyByEntity">
+        <![CDATA[INSERT INTO t_statistic_d (hit_date, source_id, hit_count, entity_id, user_id, api_code) VALUES ]]>
+        <foreach collection="data"  item="item" separator="," index="index">
+            (#{item.hitDate}, #{item.sourceId}, #{item.hitCount}, #{item.entityId}, #{item.userId}, #{item.apiCode})
+        </foreach>
+    </insert>
+    <select id="queryVarNearlyByEntityId" resultType="com.biz.warning.vo.StatitscVO">
+        <![CDATA[SELECT b.id,
+                        a.type,
+                        a.source_id,
+                        a.entity_id,
+                        a.user_id,
+                        a.api_code,
+                        a.hit_count
+                   FROM (SELECT #{type} AS type,
+                                a.source_id,
+                                a.entity_id,
+                                a.user_id,
+                                a.api_code,
+                                SUM(hit_count) AS hit_count
+                           FROM (SELECT source_id,
+                                        entity_id,
+                                        user_id,
+                                        api_code,
+                                        hit_count
+                                   FROM t_statistic_d
+                                  WHERE entity_id = #{entityId}]]>
+                <if test="startTime != null and endTime != null">
+                    <![CDATA[ AND hit_date >= #{startTime} AND hit_date <= #{endTime}]]>
+                </if>
+                <![CDATA[) a GROUP BY a.source_id, a.entity_id, a.user_id, a.api_code) a
+                   LEFT JOIN t_statistic_n b
+                     ON a.type = b.type
+                    AND a.source_id = b.source_id
+                    AND a.entity_id = b.entity_id]]>
+    </select>
+    <update id="updateVarNearlyByEntity">
+        <![CDATA[UPDATE t_statistic_n t
+                    SET t.hit_count = #{data.hitCount},
+                        t.create_time = CURRENT_TIMESTAMP()
+                  WHERE t.id = #{data.id}]]>
+    </update>
+    <insert id="insertVarNearlyByEntity">
+        <![CDATA[INSERT INTO t_statistic_n (type, source_id, entity_id, user_id, api_code, hit_count) VALUES ]]>
+        <foreach collection="data"  item="item" separator="," index="index">
+            (#{item.type}, #{item.sourceId}, #{item.entityId}, #{item.userId}, #{item.apiCode}, #{item.hitCount})
+        </foreach>
+    </insert>
+    <select id="queryEntityIdByName" resultType="java.lang.Integer">
+        <![CDATA[SELECT t.entity_id FROM risk_warning.t_entity t where t.entity_name = #{name}]]>
+    </select>
+    <select id="queryRiskStatistic" resultType="com.biz.warning.domain.RiskSource">
+        <![CDATA[SELECT a.source_id,
+                        a.source_name,
+                        SUM(IFNULL(c.hit_count, 0)) AS hit_count
+                   FROM t_variable_source a
+                  INNER JOIN (SELECT DISTINCT a.source_id
+                                FROM t_variable_pool a
+                               INNER JOIN (SELECT DISTINCT api_prod_code, api_version
+                                             FROM t_rule_set
+                                            WHERE api_code = #{apiCode}
+                                              AND is_template = 1) b
+                                  ON a.api_prod_code = b.api_prod_code
+                                 AND a.api_version = b.api_version
+                                 AND a.source_id IS NOT NULL) b
+                     ON a.source_id = b.source_id
+                   LEFT JOIN (SELECT c.source_id,
+                                     COUNT(1) AS hit_count
+                                FROM t_warn_result_variable a
+                               INNER JOIN t_entity b
+                                  ON a.entity_id = b.entity_id
+                               INNER JOIN t_variable_pool c
+                                  ON a.variable_code = c.variable_code
+                                 AND c.valid = 1
+                               WHERE c.source_id IS NOT NULL
+                                 AND b.api_code = #{apiCode}]]>
+               <if test="userIds != null and userIds.size > 0">
+                   <![CDATA[ AND b.user_id in ]]>
+                   <foreach collection="userIds" index="index" item="item" open="(" separator="," close=")">
+                       #{item}
+                   </foreach>
+               </if>
+               <if test="startTime != null and endTime != null">
+                   <![CDATA[ AND a.hit_time >= #{startTime} AND a.hit_time <= #{endTime}]]>
+               </if>
+               <![CDATA[ GROUP BY c.source_id) c ON a.source_id = c.source_id
+                  GROUP BY a.source_id, a.source_name ORDER BY a.source_id]]>
+    </select>
+    <select id="queryEntityBasicInfoById" resultType="com.biz.strategy.entity.EntityBasic">
+        <![CDATA[SELECT t.entity_id,
+                        t.company_name,
+                        t.credit_code,
+                        t.regist_no,
+                        t.regist_capital,
+                        t.company_status,
+                        t.create_time,
+                        t.legal_person_name,
+                        t.regist_address,
+                        t.biz_scope
+                   FROM t_entity_basic_info t
+                  WHERE t.entity_id = (SELECT entity_id FROM t_warn_result_variable
+                                        WHERE warn_result_variable_id = #{warnId})]]>
+    </select>
+    <select id="queryEntityBasicInfoByName" resultType="com.biz.strategy.entity.EntityBasic">
+        <![CDATA[SELECT t.entity_id,
+                        t.company_name,
+                        t.credit_code,
+                        t.regist_no,
+                        t.regist_capital,
+                        t.company_status,
+                        t.create_time,
+                        t.legal_person_name,
+                        t.regist_address,
+                        t.biz_scope
+                   FROM t_entity_basic_info t
+                  WHERE t.company_name = (SELECT b.entity_name
+                                            FROM t_warn_result_variable a
+                                           INNER JOIN t_entity b
+                                              ON a.entity_id = b.entity_id
+                                           WHERE a.warn_result_variable_id = #{warnId})
+                  ORDER BY t.entity_id DESC
+                  LIMIT 1]]>
+    </select>
+    <select id="queryAllRiskByCompanyName" resultType="com.biz.warning.domain.RiskSource">
+        <![CDATA[SELECT b.source_id,
+                        b.source_name,
+                        SUM(IFNULL(c.hit_count, 0)) AS hit_count
+                   FROM t_statistic_type a
+                  INNER JOIN t_variable_source b
+                   LEFT JOIN t_statistic_n c
+                     ON b.source_id = c.source_id
+                    AND c.type = a.type
+                  WHERE a.type = '0'
+                    AND c.api_code = #{apiCode}]]>
+        <if test="userIds != null and userIds.size > 0">
+            <![CDATA[ AND c.user_id in ]]>
+            <foreach collection="userIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="entityIds != null">
+            <![CDATA[ AND c.entity_id in ]]>
+            <foreach collection="entityIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <![CDATA[ GROUP BY a.type_desc, a.type_order, b.source_id, b.source_name
+                  ORDER BY a.type_order, b.source_id]]>
+    </select>
+    <select id="queryVariableType" resultType="java.lang.Integer">
+        <![CDATA[SELECT b.variable_type
+                   FROM t_warn_result_variable a
+                  INNER JOIN t_variable_pool b
+                     ON a.variable_code = b.variable_code
+                  WHERE a.warn_result_variable_id = #{warnId}]]>
+    </select>
+    <select id="countRiskDetails" resultType="java.lang.Integer">
+        <![CDATA[SELECT COUNT(1)
+                   FROM t_variable_detail a
+                  INNER JOIN t_warn_result_variable b
+                     ON a.entity_id = b.entity_id
+                    AND a.variable_id = b.variable_id
+                    AND b.warn_result_variable_id = #{warnId}
+                  WHERE a.warn_id <= b.warn_result_variable_id]]>
+    </select>
+    <select id="queryRiskDetails" resultType="com.biz.warning.domain.VariableDetail">
+        <![CDATA[SELECT a.warn_id,
+                        a.entity_id,
+                        a.variable_id,
+                        DATE_FORMAT(a.hit_date, '%Y-%m-%d') AS hit_date,
+                        a.var_detail
+                   FROM t_variable_detail a
+                  INNER JOIN t_warn_result_variable b
+                     ON a.entity_id = b.entity_id
+                    AND a.variable_id = b.variable_id
+                    AND b.warn_result_variable_id = #{warnId}
+                  WHERE a.warn_id <= b.warn_result_variable_id
+                  ORDER BY a.warn_id DESC
+                  LIMIT #{pageNo},#{pageSize}]]>
+    </select>
+    <select id="queryAppId" resultType="java.lang.String">
+        SELECT b.parent_app_id
+          FROM t_warn_result_variable a
+         INNER JOIN t_entity b
+            ON a.entity_id = b.entity_id
+           AND a.warn_result_variable_id = #{warnId}
+    </select>
+    <select id="queryCaseDetail" resultType="java.lang.String">
+        <![CDATA[SELECT case_content FROM t_justice_judgment_doc t WHERE t.warn_id = #{warnId} AND t.case_id = #{caseId}]]>
+    </select>
+    <insert id="insertCaseDetail">
+        <![CDATA[INSERT INTO t_justice_judgment_doc (warn_id, case_id, case_content) VALUE (#{warnId}, #{caseId}, #{content})]]>
+    </insert>
+</mapper>

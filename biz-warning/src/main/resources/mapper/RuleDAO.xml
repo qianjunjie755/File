@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.warning.dao.RuleDAO">
+    <resultMap id="rule_map" type="com.biz.warning.vo.RuleVO">
+        <result property="ruleId" column="rule_id" />
+        <result property="ruleCode" column="rule_code" />
+        <result property="ruleName" column="rule_name" />
+        <result property="businessCode" column="business_code" />
+        <result property="version" column="version" />
+        <result property="calcLogic" column="calc_logic" />
+        <result property="userId" column="user_id" />
+        <result property="apiCode" column="api_code" />
+        <result property="srcRuleId" column="src_rule_id" />
+        <result property="srcRuleCode" column="src_rule_code" />
+        <result property="ruleState" column="rule_state" />
+        <result property="isTemplate" column="is_template" />
+        <result property="apiProdCode" column="api_prod_code" />
+        <result property="apiVersion" column="api_version" />
+        <result property="description" column="description" />
+        <result property="lastUpdateTime" column="last_update_time" />
+        <result property="createTime" column="create_time" />
+        <result property="accHitCount" column="acc_hitCount" />
+    </resultMap>
+
+    <insert id="addRule" useGeneratedKeys="true" keyProperty="rule.ruleId"   parameterType="com.biz.warning.vo.RuleVO">
+        INSERT INTO risk_warning.t_rule
+        (rule_code,
+        rule_name,
+        business_code,
+        version,
+        calc_logic,
+        user_id,
+        api_code,
+        src_rule_id,
+        src_rule_code,
+        rule_state,
+        is_template,
+        api_prod_code,
+        api_version,
+        description,
+        last_update_time,
+        create_time)
+        VALUES
+        (#{rule.ruleCode},#{rule.ruleName},#{rule.businessCode},#{rule.version},#{rule.calcLogic},#{rule.userId},
+        #{rule.apiCode},#{rule.srcRuleId},#{rule.srcRuleCode},#{rule.ruleState},#{rule.isTemplate},#{rule.apiProdCode},#{rule.apiVersion},
+        #{rule.description},now(),now())
+    </insert>
+
+    <insert id="addRuleList" useGeneratedKeys="true" keyProperty="ruleId"   parameterType="java.util.List">
+        INSERT INTO risk_warning.t_rule
+        (rule_code,
+        rule_name,
+        business_code,
+        version,
+        calc_logic,
+        user_id,
+        api_code,
+        src_rule_id,
+        src_rule_code,
+        rule_state,
+        is_template,
+        api_prod_code,
+        api_version,
+        description,
+        last_update_time,
+        create_time)
+        VALUES
+        <foreach collection ="list" item="rule" index="index" separator=",">
+        (#{rule.ruleCode},#{rule.ruleName},#{rule.businessCode},#{rule.version},#{rule.calcLogic},#{rule.userId},
+        #{rule.apiCode},#{rule.srcRuleId},#{rule.srcRuleCode},#{rule.ruleState},#{rule.isTemplate},#{rule.apiProdCode},#{rule.apiVersion},
+        #{rule.description},now(),now())
+        </foreach>
+    </insert>
+
+    <update id="updateRule" parameterType="com.biz.warning.vo.RuleVO">
+        UPDATE risk_warning.t_rule
+        SET
+        <if test="null != rule.ruleName">
+            rule_name = #{rule.ruleName},
+        </if>
+        <if test="null != rule.businessCode">
+            business_code = #{rule.businessCode},
+        </if>
+        <if test="null != rule.calcLogic">
+            calc_logic = #{rule.calcLogic},
+        </if>
+        <if test="null != rule.description">
+            description = #{rule.description},
+        </if>
+        <if test="null != rule.srcRuleId">
+            src_rule_id = #{rule.srcRuleId},
+        </if>
+        <if test="null != rule.srcRuleCode">
+            src_rule_code = #{rule.srcRuleCode},
+        </if>
+        <if test="null != rule.isTemplate">
+            is_template = #{rule.isTemplate},
+        </if>
+        last_update_time = now()
+        WHERE rule_id = #{rule.ruleId}
+    </update>
+
+    <update id="updateRuleState" parameterType="com.biz.warning.vo.RuleVO">
+        UPDATE risk_warning.t_rule
+        SET
+        rule_state = #{ruleState},
+        last_update_time = now()
+        WHERE rule_id = #{ruleId}
+    </update>
+    <update id="updateRuleCalcLogic" parameterType="com.biz.warning.vo.RuleVO">
+        UPDATE risk_warning.t_rule
+        SET
+            calc_logic = #{rule.calcLogic},
+            last_update_time = now()
+        WHERE rule_id = #{rule.ruleId}
+    </update>
+    <update id="updateRuleForCopyStrategy" parameterType="com.biz.warning.vo.RuleVO">
+        UPDATE risk_warning.t_rule
+        SET
+            src_rule_id=rule_id,last_update_time=now()
+        where api_code=#{rule.apiCode} and is_template=1 and user_id=#{rule.userId}
+    </update>
+    <update id="updateHitCountByRuleId">
+        update risk_warning.t_rule set hit_count=hit_count+#{hitCount},last_update_time=now() where rule_id=#{ruleId}
+    </update>
+
+    <select id="findAllRule" resultMap="rule_map" parameterType="com.biz.warning.vo.RuleVO">
+        select
+        t.rule_id,t.rule_code ,t.rule_name ,t.business_code,t.version,t.calc_logic,t.user_id,t.api_code, t.src_rule_id, t.src_rule_code,t.rule_state,t.is_template,
+        t.api_prod_code,t.api_version,t.description,date_format(t.last_update_time,'%Y-%m-%d %T') last_update_time,
+        date_format(t.create_time,'%Y-%m-%d %T') create_time
+        from risk_warning.t_rule t
+        where t.api_code = #{rule.apiCode} and t.is_template = #{rule.isTemplate}
+    </select>
+
+    <select id="findRuleById" resultMap="rule_map">
+        select
+        t.rule_id,t.rule_code ,t.rule_name ,t.business_code,t.version,t.calc_logic,t.user_id,t.api_code, t.src_rule_id,t.src_rule_code, t.rule_state,t.is_template,
+        t.api_prod_code,t.api_version,t.description,date_format(t.last_update_time,'%Y-%m-%d %T') last_update_time, date_format(t.create_time,'%Y-%m-%d %T') create_time
+        from risk_warning.t_rule t
+        where t.rule_id = #{ruleId}
+        <if test="null != userId">
+            and t.user_id = #{userId}
+        </if>
+        <if test="null != apiCode">
+            and t.api_code = #{apiCode}
+        </if>
+    </select>
+
+    <select id="findRuleByRuleCodeAndVersion" resultMap="rule_map">
+        select
+        t.rule_id,t.rule_code ,t.rule_name ,t.business_code,t.version,t.calc_logic,t.user_id,t.api_code, t.src_rule_id,t.src_rule_code, t.rule_state,t.is_template,
+        t.api_prod_code,t.api_version,t.description,date_format(t.last_update_time,'%Y-%m-%d %T') last_update_time, date_format(t.create_time,'%Y-%m-%d %T') create_time
+        from risk_warning.t_rule t left join t_ruleset_rule rsr on rsr.rule_id=t.rule_id
+		left join risk_warning.t_rule_set rs on rs.rule_set_id=rsr.rule_set_id
+        where t.rule_code = #{ruleCode} and t.version = #{version} and rs.origin=1
+    </select>
+
+    <select id="findRuleVersion" resultMap="rule_map" >
+        select
+        distinct(t.version) version,t.rule_id,t.rule_code,t.rule_state,t.src_rule_code,t.is_template
+        from risk_warning.t_rule t
+        inner join risk_warning.t_ruleset_rule a on a.rule_id=t.rule_id
+        inner join risk_warning.t_rule_set b on b.rule_set_id=a.rule_set_id
+        where t.is_template=1  and t.rule_state in (1,2) and b.origin=1
+        <choose>
+            <when test="null != srcRuleCode and '' != srcRuleCode">
+               and t.src_rule_code=#{srcRuleCode}
+            </when>
+            <otherwise>
+               and t.src_rule_id = #{ruleId}
+            </otherwise>
+        </choose>
+        <if test="null != version ">
+            and version=CAST(#{version} as decimal(4,1))
+        </if>
+        order by t.rule_state asc,t.version desc
+    </select>
+
+    <select id="findRules" resultMap="rule_map" parameterType="com.biz.warning.vo.RuleVO">
+        select
+        t.rule_code ,any_value(t.rule_name) rule_name
+        from risk_warning.t_rule t
+        where t.api_code = #{rule.apiCode} and t.is_template = #{rule.isTemplate}
+        GROUP BY t.rule_code
+    </select>
+
+    <delete id="deleteRule" parameterType="com.biz.warning.vo.RuleVO">
+        DELETE FROM risk_warning.t_rule
+        WHERE rule_id = #{rule.ruleId}
+    </delete>
+
+
+    <select id="findVariableByRuleId" resultType="com.biz.warning.vo.VariableVO">
+        select v.variable_id,v.variable_code,vp.variable_name,vp.description,fp.frequency_code,fp.frequency_name,v.period,v.period_unit from risk_warning.t_rule r
+        inner join risk_warning.t_variable v on r.rule_id=v.rule_id
+        left join t_frequency_pool fp on fp.frequency_code=v.frequency_code
+        left join t_variable_pool vp on vp.variable_code=v.variable_code
+        where r.rule_id=#{ruleId}
+    </select>
+
+    <select id="findRuleVersionByRuleCode" resultMap="rule_map" parameterType="com.biz.warning.vo.RuleVO">
+        select
+        t1.rule_id,t1.rule_code ,t1.version,t1.rule_state,t1.src_rule_code
+        from risk_warning.t_rule t1 left join risk_warning.t_ruleset_rule rsr on rsr.rule_id=t1.rule_id
+		left join risk_warning.t_rule_set rs on rs.rule_set_id=rsr.rule_set_id
+        where t1.rule_code = #{ruleCode} and t1.is_template = 1 and rs.origin=1
+         order by t1.version
+    </select>
+
+    <select id="findActiveRuleVersionByRuleCode" resultMap="rule_map" parameterType="com.biz.warning.vo.RuleVO">
+        select
+        t1.rule_id,t1.rule_code ,t1.version,t1.rule_state,t1.src_rule_code
+        from risk_warning.t_rule t1
+        where t1.rule_code = #{ruleCode} and t1.is_template = 1  and (t1.rule_state = 1 or t1.rule_state = 2) and t1.api_code=#{apiCode}
+        order by t1.version
+    </select>
+
+
+
+    <select id="findMaxRuleVersion" resultType="float">
+		select max(version) from risk_warning.t_rule where rule_code=#{ruleCode}
+    </select>
+
+    <select id="findAllRuleVersion" resultMap="rule_map">
+        select t.rule_id,t.rule_code,t.rule_state,t.version,t.description
+        from risk_warning.t_rule t where is_template=1 order by rule_code,version
+    </select>
+
+    <select id="findHitRuleMostListByUserId" resultMap="rule_map">
+         select c.variable_name rule_Name,count(c.variable_name) acc_hitCount from risk_warning.t_warn_result_variable a inner join risk_warning.t_variable_pool c on c.variable_code=a.variable_code inner join risk_warning.t_entity b on b.entity_id=a.entity_id
+         where b.user_id=#{userId}
+         group by(rule_Name)
+         order by acc_hitCount desc  limit 10
+    </select>
+    <select id="findHitRuleMostList" resultMap="rule_map">
+        select c.variable_name rule_Name,count(c.variable_name) acc_hitCount from risk_warning.t_warn_result_variable a inner join risk_warning.t_variable_pool c on c.variable_code=a.variable_code inner join risk_warning.t_entity b on b.entity_id=a.entity_id
+         where b.api_code=#{apiCode}
+         group by(rule_Name)
+         order by acc_hitCount desc
+    </select>
+    <select id="findHitRuleMostListByUserIds" resultMap="rule_map">
+        select c.variable_name rule_Name,count(c.variable_name) acc_hitCount
+          from risk_warning.t_warn_result_variable a
+         inner join risk_warning.t_variable_pool c
+            on c.variable_code=a.variable_code
+         inner join risk_warning.t_entity b on b.entity_id=a.entity_id
+         where b.api_code = #{apiCode}
+        <if test="list != null and list.size > 0">
+           and b.user_id IN
+            <foreach collection="list"  item="userId" separator="," open="(" close=")" index="index">
+                #{userId}
+            </foreach>
+        </if>
+        group by(rule_Name)
+        order by acc_hitCount desc  limit 10
+    </select>
+    <select id="findRuleForChangeVersion" resultType="com.biz.warning.vo.RuleVO" parameterType="com.biz.warning.vo.RuleVO">
+        select
+            t.rule_id,t.rule_code ,t.rule_name ,t.business_code,t.version,t.calc_logic,t.user_id,t.api_code, t.src_rule_id,t.src_rule_code, t.rule_state,t.is_template,
+            t.api_prod_code,t.api_version,t.description,date_format(t.last_update_time,'%Y-%m-%d %T') last_update_time, date_format(t.create_time,'%Y-%m-%d %T') create_time
+        from risk_warning.t_rule t
+        inner join risk_warning.t_ruleset_rule t1 on t1.rule_id=t.rule_id
+        inner join risk_warning.t_rule_set t2 on t2.rule_set_id=t1.rule_set_id
+        where  t2.origin=1
+        <if test="null != ruleVO.ruleId">
+            and t.rule_id=#{ruleVO.ruleId}
+        </if>
+        <if test="null != ruleVO.srcRuleCode">
+            and t.src_rule_code = #{ruleVO.srcRuleCode}
+        </if>
+        <if test="null != ruleVO.version">
+            and t.version=CAST(#{ruleVO.version} as decimal(4,1))
+        </if>
+        <if test="null != ruleVO.isTemplate">
+            and t.is_template=#{ruleVO.isTemplate}
+        </if>
+        limit 1
+    </select>
+
+
+    <select id="findRuleByRuleSetAndRuleName" resultMap="rule_map">
+        select
+        r.rule_id,r.rule_code ,r.version,r.rule_state,r.src_rule_code,r.rule_name
+        from risk_warning.t_rule r inner join risk_warning.t_ruleset_rule rsr on rsr.rule_id=r.rule_id
+        where rsr.rule_set_id = #{ruleSetId} and r.rule_code != #{ruleCode} and r.rule_name = #{ruleName} limit 1
+    </select>
+    <select id="findRiskHitSituaion" resultType="com.biz.warning.domain.HitProcessr">
+        SELECT c.variable_name AS processrName,COUNT(c.variable_name) hitCount
+        FROM risk_warning.t_warn_result_variable a
+        INNER JOIN risk_warning.t_variable_pool c
+        ON c.variable_code=a.variable_code
+        INNER JOIN risk_warning.t_entity b
+        ON b.entity_id=a.entity_id
+        WHERE 1 = 1
+        <if test="apiCode !=null" >
+            AND b.api_code = #{apiCode}
+        </if>
+        <if test="list !=null and list.size>0" >
+            AND b.user_id in
+            <foreach collection="list"  item="userId" separator="," open="(" close=")" index="index">
+                #{userId}
+            </foreach>
+        </if>
+        <if test="beginDay != null and toDay !=null ">
+            AND a.hit_time BETWEEN #{beginDay} AND #{toDay}
+        </if>
+        <if test="sourceIds !=null and sourceIds.length>0" >
+           AND c.source_id IN
+            <foreach collection="sourceIds"  item="userId" separator="," open="(" close=")" index="index">
+                #{userId}
+            </foreach>
+        </if>
+        GROUP BY c.variable_name
+        ORDER BY 2 DESC
+    </select>
+    <select id="findRiskCompany" resultType="com.biz.warning.domain.HitProcessr">
+        SELECT b.company_name AS processrName,COUNT(b.company_name) hitCount FROM risk_warning.t_warn_result_variable a
+        INNER JOIN risk_warning.t_variable_pool c ON c.variable_code=a.variable_code
+        INNER JOIN risk_warning.t_entity b ON b.entity_id=a.entity_id
+        <if test="apiCode != null" >
+            AND b.api_code = #{apiCode}
+        </if>
+        <if test="list !=null and list.size>0" >
+            AND b.user_id in
+            <foreach collection="list"  item="userId" separator="," open="(" close=")" index="index">
+                #{userId}
+            </foreach>
+        </if>
+        <if test="beginDay != null and toDay !=null ">
+            AND a.hit_time BETWEEN #{beginDay} AND #{toDay}
+        </if>
+        <if test="sourceIds !=null and sourceIds.length>0" >
+            AND c.source_id IN
+            <foreach collection="sourceIds"  item="userId" separator="," open="(" close=")" index="index">
+                #{userId}
+            </foreach>
+        </if>
+        GROUP BY b.company_name
+        ORDER BY 2 DESC
+    </select>
+    <select id="findRiskRuleSet" resultType="com.biz.warning.domain.HitProcessr">
+        SELECT d.rule_set_name AS processrName,COUNT(d.rule_set_name) hitCount FROM risk_warning.t_warn_result_variable a
+        INNER JOIN risk_warning.t_variable_pool c ON c.variable_code=a.variable_code
+        INNER JOIN risk_warning.t_entity b ON b.entity_id=a.entity_id
+        INNER JOIN risk_warning.t_rule_set d ON d.rule_set_id = a.rule_set_id
+        WHERE 1 = 1
+        <if test="apiCode !=null" >
+            AND b.api_code = #{apiCode}
+        </if>
+        <if test="list !=null and list.size>0" >
+            AND b.user_id in
+            <foreach collection="list"  item="userId" separator="," open="(" close=")" index="index">
+                #{userId}
+            </foreach>
+        </if>
+        <if test="sourceIds !=null and sourceIds.length>0" >
+            AND c.source_id IN
+            <foreach collection="sourceIds"  item="userId" separator="," open="(" close=")" index="index">
+                #{userId}
+            </foreach>
+        </if>
+        <if test="beginDay != null and toDay !=null ">
+            AND a.hit_time BETWEEN #{beginDay} AND #{toDay}
+        </if>
+        GROUP BY d.rule_set_name
+        ORDER BY 2 DESC
+    </select>
+    <select id="findRiskRule" resultType="com.biz.warning.domain.HitProcessr">
+        SELECT d.rule_name AS processrName,COUNT(d.rule_name) hitCount FROM risk_warning.t_warn_result_variable a
+        INNER JOIN risk_warning.t_variable_pool c ON c.variable_code=a.variable_code
+        INNER JOIN risk_warning.t_entity b ON b.entity_id=a.entity_id
+        INNER JOIN risk_warning.t_rule d ON d.rule_id = a.rule_id
+        WHERE 1 = 1
+        <if test="apiCode != null" >
+            AND b.api_code = #{apiCode}
+        </if>
+        <if test="list !=null and list.size>0" >
+            AND b.user_id in
+            <foreach collection="list"  item="userId" separator="," open="(" close=")" index="index">
+                #{userId}
+            </foreach>
+        </if>
+        <if test="sourceIds !=null and sourceIds.length>0" >
+            AND c.source_id IN
+            <foreach collection="sourceIds"  item="userId" separator="," open="(" close=")" index="index">
+                #{userId}
+            </foreach>
+        </if>
+        <if test="beginDay != null and toDay !=null ">
+            AND a.hit_time BETWEEN #{beginDay} AND #{toDay}
+        </if>
+        GROUP BY d.rule_name
+        ORDER BY 2 DESC
+    </select>
+
+</mapper>
+
+

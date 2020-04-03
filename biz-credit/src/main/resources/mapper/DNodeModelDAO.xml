@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.DNodeModelDAO">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="dNodeModel.modelId" parameterType="com.biz.credit.vo.ApiVO">
+        insert into t_d_node_model(model_type, model_code, node_id, status, update_time, create_time) values
+        (#{dNodeModel.modelType},#{dNodeModel.modelCode},#{dNodeModel.nodeId},#{dNodeModel.status},now(),now())
+    </insert>
+
+    <select id="queryNodeModel" parameterType="com.biz.credit.domain.DNodeModel" resultType="com.biz.credit.domain.DNodeModel">
+        select model_id,model_type, model_code, node_id, status from t_d_node_model
+        where model_type = #{dNodeModel.modelType} and node_id = #{dNodeModel.nodeId} and status = 1
+    </select>
+    <select id="queryNodeModelChoose" parameterType="com.biz.credit.domain.DNodeModel" resultType="java.lang.Integer">
+        select count(*) from t_d_node_model
+        where model_type = #{dNodeModel.modelType}
+        and node_id = #{dNodeModel.nodeId}
+        and model_code = #{dNodeModel.modelCode} and status = 1;
+    </select>
+
+    <update id="updateStatusByNodeIdAndType">
+      update t_d_node_model set status = #{status} where node_id = #{nodeId} and model_type = #{modelType}
+    </update>
+</mapper>

@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.TaskDAO">
+    <insert id="addTask"  useGeneratedKeys="true" keyProperty="task.taskId">
+        insert into task
+        (task_name,
+         task_code,
+         api_code,
+         user_id,
+         user_type,
+         description,
+         last_update_time,
+         create_time,
+         task_status,module_type_id,task_type,industry_id)
+        values
+            (#{task.taskName},
+             #{task.taskCode},
+             #{task.apiCode},
+             #{task.userId},
+             #{task.userType},
+             #{task.description},
+             now(),
+             now(),1,#{task.moduleTypeId},#{task.taskType},#{task.industryId})
+    </insert>
+
+    <update id="updateTask">
+      update task t
+      set
+      t.task_name = #{task.taskName},
+      t.task_code = #{task.taskCode},
+      t.task_status = #{task.taskStatus},
+      t.api_code = #{task.apiCode},
+      t.user_id = #{task.userId},
+      t.user_type = #{task.userType},
+      t.description = #{task.description},
+      t.last_update_time =  #{task.lastUpdateTime}
+      where t.task_id = #{task.taskId}
+    </update>
+    <update id="updateTaskStatus" parameterType="java.lang.Integer">
+        update task
+        set task_status=2
+        where task_id=#{taskId}
+    </update>
+
+    <resultMap id="task_list"  type="com.biz.credit.vo.TaskVO">
+        <result property="taskId" column="task_id" />
+        <result property="taskName" column="task_name" />
+        <result property="taskCode" column="task_code" />
+        <result property="taskId" column="task_id" />
+        <result property="taskStatus" column="task_status" />
+        <result property="apiCode" column="api_code" />
+        <result property="userId" column="user_id" />
+        <result property="userType" column="user_type" />
+        <result property="description" column="description" />
+        <result property="lastUpdateTime" column="last_update_time" />
+        <result property="createTime" column="create_time" />
+        <result property="moduleTypeId" column="module_type_id" />
+        <result property="taskType" column="task_type" />
+    </resultMap>
+    <select id="findTaskList"  resultMap="task_list" resultType="com.biz.credit.domain.Task">
+      select
+        t.task_id,
+        t.task_name,
+        t.task_code,
+        t.task_status,
+        t.user_type,
+        t.task_type,
+        t.description,
+        date_format(t.last_update_time,'%Y-%m-%d %T') last_update_time,
+        date_format(t.create_time,'%Y-%m-%d %T') create_time
+      from task t
+      right join input_file_detail f on f.task_id=t.task_id and f.status!=4
+      <where> 1=1
+            <if test="task.taskId != null  and task.taskId != ''">
+                and t.task_id = #{task.taskId}
+            </if>
+            <if test="task.apiCode != null and task.apiCode != ''">
+                and t.api_code = #{task.apiCode}
+            </if>
+            <if test="task.userId != null  and task.userId != ''">
+                and t.user_id = #{task.userId}
+            </if>
+      </where>
+        GROUP BY t.task_id
+        order by t.create_time desc
+    </select>
+    <select id="queryTaskByName"  resultMap="task_list" resultType="com.biz.credit.domain.Task">
+        select
+        t.task_id,
+        t.task_name,
+        t.task_code,
+        t.task_status,
+        t.user_type,
+        t.task_type,
+        t.description,
+        date_format(t.last_update_time,'%Y-%m-%d %T') last_update_time,
+        date_format(t.create_time,'%Y-%m-%d %T') create_time
+        from task t
+        <where> 1=1
+            <if test="task.taskName != null and task.taskName != ''">
+                and t.task_name like concat('%',concat(#{task.taskName},'%'))
+            </if>
+            <if test="task.apiCode != null and task.apiCode != ''">
+                and t.api_code = #{task.apiCode}
+            </if>
+            <if test="task.userId != null and task.userId != ''">
+                and t.user_id = #{task.userId}
+            </if>
+            <if test="task.beginTime != null and task.beginTime != ''">
+                and t.create_time  &gt;= #{task.beginTime}
+            </if>
+            <if test="task.endTime != null and task.endTime != ''">
+                and t.create_time &lt;= #{task.endTime}
+            </if>
+            <if test="task.taskType != null and task.taskType != 0">
+                and t.task_type = #{task.taskType}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryTaskById"   resultMap="task_list" resultType="com.biz.credit.domain.Task">
+        select
+        t.task_id,
+        t.task_name,
+        t.task_code,
+        t.task_status,
+        t.user_type,
+        t.task_type,
+        t.description,
+        date_format(t.last_update_time,'%Y-%m-%d %T') last_update_time,
+        date_format(t.create_time,'%Y-%m-%d %T') create_time
+        from task t
+        inner join  module_type t1 on t1.module_type_id=t.module_type_id
+        <where>
+            t.task_id = #{task.taskId}
+        </where>
+    </select>
+    <select id="queryTaskVOById" resultType="com.biz.credit.vo.TaskVO" parameterType="com.biz.credit.vo.TaskVO">
+        select
+        t.task_id taskId,
+        t.task_name taskName,
+        t.task_code taskCode,
+        t.task_status taskStatus,
+        t.description,
+        t.task_type,
+        t1.html_template_name htmlTemplateName
+        from task t
+        inner join  module_type t1 on t1.module_type_id=t.module_type_id
+        <where>
+            t.task_id = #{task.taskId}
+        </where>
+    </select>
+
+    <select id="queryTaskListByNameAndDate" parameterType="com.biz.credit.vo.BiInputDataVO" resultType="com.biz.credit.domain.Task">
+        select t.task_id,
+        t.task_name,
+        t.task_code,
+        t.task_status,
+        t.user_type,
+        t.task_type,
+        t.description,
+        date_format(t.last_update_time,'%Y-%m-%d %T') last_update_time,
+        date_format(t.create_time,'%Y-%m-%d %T') create_time
+        from  task t  left join input_file_detail i on t.task_id=i.task_id
+        <where>
+            <if test="biInputDataVO.taskName !=null and biInputDataVO.taskName != ''">
+                and t.task_name like concat('%',concat(#{biInputDataVO.taskName},'%'))
+            </if>
+            <if test="null != biInputDataVO.startDate and biInputDataVO.startDate !=''">
+                and  i.date&gt;=#{biInputDataVO.startDate}
+            </if>
+            <if test="null != biInputDataVO.endDate and biInputDataVO.endDate !=''">
+                and i.date&lt;=#{biInputDataVO.endDate}
+            </if>
+        </where>
+    </select>
+</mapper>

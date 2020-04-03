@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.ModuleTypeTemplateDAO">
+    <insert id="addModuleTypeTemplate"  useGeneratedKeys="true" keyProperty="moduleTypeTemplate.moduleTypeId" parameterType="com.biz.credit.domain.ModuleTypeTemplate" >
+      insert into module_type_template
+      (module_type_name,
+      parent_id,
+      is_last,
+      req_url,
+      prod_code,
+      last_update_time,
+      create_time)
+      values
+      (
+       #{moduleTypeTemplate.moduleTypeName},
+       #{moduleTypeTemplate.parentId},
+       #{moduleTypeTemplate.isLast},
+       #{moduleTypeTemplate.reqUrl},
+       #{moduleTypeTemplate.prodCode},
+       now(),
+       now())
+    </insert>
+
+    <update id="updateModuleTypeTemplate">
+      update module_type_template t
+      set
+      t.module_type_name = #{moduleTypeTemplate.moduleTypeName},
+      t.parent_id = #{moduleTypeTemplate.parentId},
+      t.is_last = #{moduleTypeTemplate.isLast},
+      t.req_url = #{moduleTypeTemplate.reqUrl},
+      t.prodCode = #{moduleTypeTemplate.prod_code},
+      t.last_update_time = #{moduleTypeTemplate.lastUpdateTime}
+      where t.module_type_id = #{moduleTypeTemplate.moduleTypeId}
+    </update>
+
+    <resultMap id="moduleTypeTemplate_list"  type="com.biz.credit.vo.ModuleTypeTemplateVO">
+        <result property="moduleTypeId" column="module_type_id" />
+        <result property="moduleTypeName" column="module_type_name" />
+        <result property="parentId" column="parent_id" />
+        <result property="typeCode" column="type_code" />
+        <result property="parentCode" column="parent_code" />
+        <result property="isLast" column="is_last" />
+        <result property="orderNo" column="order_no" />
+        <result property="moduleId" column="module_id" />
+        <result property="lastUpdateTime" column="last_update_time" />
+        <result property="createTime" column="create_time" />
+        <result property="reqUrl" column="req_url" />
+        <result property="prodCode" column="prod_code" />
+        <result property="reportType" column="report_type" />
+    </resultMap>
+    <select id="findModuleTypeTemplateList"  resultMap="moduleTypeTemplate_list" resultType="com.biz.credit.domain.ModuleTypeTemplate">
+      select
+        t.module_type_id,
+        t.module_type_name,
+        t.type_code,
+        t.parent_code,
+        t.is_last,
+        t.module_id,
+        t.report_type
+      from module_type_template t
+        <where> 1=1
+            <if test="moduleTypeTemplate.moduleId != null and moduleTypeTemplate.moduleId !=''">
+                and t.module_id = #{moduleTypeTemplate.moduleId}
+            </if>
+            <if test="moduleTypeTemplate.reportType != null and moduleTypeTemplate.reportType !=''">
+                and t.report_type = #{moduleTypeTemplate.reportType}
+            </if>
+            <if test="moduleTypeTemplate.isLast != null and moduleTypeTemplate.isLast !=''">
+                and t.is_last = #{moduleTypeTemplate.isLast}
+            </if>
+        </where>
+    </select>
+    <select id="findParentCodeList"  resultMap="moduleTypeTemplate_list" resultType="com.biz.credit.domain.ModuleTypeTemplate">
+        select
+        distinct parent.module_type_id,
+        parent.module_type_name,
+        parent.type_code,
+        parent.parent_code,
+        parent.module_id,
+        parent.report_type
+        from module_type_template parent
+        inner join module_type_template child on parent.type_code=child.parent_code and child.report_type = parent.report_type
+        <where> 1=1
+            <if test="moduleTypeTemplate.moduleId != null and moduleTypeTemplate.moduleId !=''">
+                and child.module_id = #{moduleTypeTemplate.moduleId}
+            </if>
+            <if test="moduleTypeTemplate.reportType != null and moduleTypeTemplate.reportType !=''">
+                and child.report_type = #{moduleTypeTemplate.reportType}
+            </if>
+            <if test="moduleTypeTemplate.isLast != null and moduleTypeTemplate.isLast !=''">
+                and child.is_last = #{moduleTypeTemplate.isLast}
+            </if>
+        </where>
+    </select>
+    <select id="findModuleTypeTemplateListForTask" resultMap="moduleTypeTemplate_list" >
+        select
+            t.prod_code,
+            t.req_url
+        from module_type_template t
+    </select>
+</mapper>

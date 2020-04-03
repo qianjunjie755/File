@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.warning.dao.VariableParamDAO">
+    <resultMap id="variable_param_map" type="com.biz.warning.domain.VariableParam">
+        <result property="paramId" column="param_id" />
+        <result property="paramName" column="param_name" />
+        <result property="handler" column="handler" />
+        <result property="description" column="description" />
+        <result property="lastUpdateTime" column="last_update_time" />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+
+    <insert id="addVariableParam" useGeneratedKeys="true" keyProperty="variableParam.variableParamId"   parameterType="com.biz.warning.domain.VariableParam">
+        INSERT INTO t_variable_param
+        (param_name,
+        handler,
+        description,
+        last_update_time,
+        create_time)
+        VALUES
+        (#{variableParam.paramName},#{variableParam.handler},#{variableParam.description},now(),now())
+
+    </insert>
+
+    <update id="updateVariableParam" parameterType="com.biz.warning.domain.VariableParam">
+        UPDATE t_variable_param
+        SET
+        param_name = #{variableParam.paramName},
+        handler = #{variableParam.handler},
+        description = #{variableParam.description},
+        last_update_time = now()
+        WHERE param_id = #{variableParam.paramId}
+    </update>
+
+    <delete id="deleteVariableParam" parameterType="com.biz.warning.domain.VariableParam" >
+        DELETE FROM t_variable_param
+        WHERE param_id = #{variableParam.paramId}
+    </delete>
+
+    <select id="findSingleVariableParam" resultMap="variable_param_map" parameterType="com.biz.warning.domain.VariableParam">
+      select
+        t.param_id, t.param_name ,t.handler, t.description,
+        date_format(t.last_update_time,'%Y-%m-%d %T') last_update_time,
+        date_format(t.create_time,'%Y-%m-%d %T') create_time
+      from t_variable_param t
+        <where>
+            <if test="variableParam.paramId != null">
+                and t.param_id = #{variableParam.paramId}
+            </if>
+        </where>
+    </select>
+
+
+</mapper>

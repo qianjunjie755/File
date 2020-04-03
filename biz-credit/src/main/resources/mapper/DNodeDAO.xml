@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.DNodeDAO">
+    <insert id="insertNodeBasic" useGeneratedKeys="true" keyProperty="dNode.nodeId" parameterType="com.biz.credit.domain.DNode">
+        insert into t_d_node(node_name, node_desc, node_order, flow_id, exec_next_node, status,update_time,
+        create_time)
+       values(#{dNode.nodeName},#{dNode.nodeDesc},#{dNode.nodeOrder},#{dNode.flowId},#{dNode.execNextNode},
+       #{dNode.status},now(),now())
+    </insert>
+
+    <update id="updateNodeBasic" parameterType="com.biz.credit.domain.DNode">
+        update  t_d_node t
+        SET
+            <if test="dNode.nodeName != null and dNode.nodeName != ''">
+                t.node_name=#{dNode.nodeName},
+            </if>
+            <if test="dNode.nodeDesc != null">
+                t.node_desc=#{dNode.nodeDesc},
+            </if>
+            <if test="dNode.nodeOrder != null">
+                t.node_order=#{dNode.nodeOrder},
+            </if>
+            <if test="dNode.flowId != null">
+                t.flow_id=#{dNode.flowId},
+            </if>
+            <if test="dNode.execNextNode != null">
+                t.exec_next_node=#{dNode.execNextNode},
+            </if>
+            <if test="dNode.status != null">
+                t.status=#{dNode.status},
+            </if>
+            t.update_time=now()
+        where t.node_id=#{dNode.nodeId}
+    </update>
+
+    <update id="updateStatusByFlowId">
+        update t_d_node set status = #{status}
+        where flow_id = #{flowId}
+    </update>
+
+    <select id="queryListByFlowId" resultType="com.biz.credit.vo.DNodeVO">
+        select node_id,node_name,node_desc,node_order,flow_id,exec_next_node,status from t_d_node
+        where flow_id = #{flowId} and status = 1 order by node_order
+    </select>
+
+    <update id="updateStatusById">
+        update t_d_node set status = #{status}
+        where node_id = #{nodeId}
+    </update>
+
+    <resultMap id="param_list"  type="com.biz.credit.domain.DNodeParam">
+        <result property="id" column="id" />
+        <result property="code" column="code" />
+        <result property="name" column="name" />
+        <result property="fields" column="fields" />
+        <result property="choose" column="choose" />
+        <result property="required" column="required" />
+        <result property="nodeId" column="node_id" />
+        <result property="status" column="status" />
+        <result property="updateTime" column="update_time" />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+    <select id="queryInPararms"  resultMap="param_list">
+        select
+        t.id,t.code,t.name,t.fields,case t.choose when 1 then 'true' when 0 then 'false' ELSE 'false' end as choose ,
+        t.required ,t.node_id,t.status,
+        date_format(t.update_time,'%Y-%m-%d %T') update_time,
+        date_format(t.create_time,'%Y-%m-%d %T') create_time
+        from t_d_node_params t
+        WHERE
+        t.node_id = #{nodeId} AND t.status = 1;
+    </select>
+    <insert id="insertInParams" useGeneratedKeys="true" keyProperty="dNodeParam.id" parameterType="com.biz.credit.domain.DNodeParam" >
+        insert into  t_d_node_params
+        (code,name,fields,choose,required,node_id,status,update_time,create_time)
+        VALUES
+        (#{dNodeParam.code},#{dNodeParam.name},#{dNodeParam.fields},
+        #{dNodeParam.isChoose},#{dNodeParam.required},#{dNodeParam.nodeId},#{dNodeParam.status},now(),now())
+    </insert>
+
+    <resultMap id="nodeParam_list" type="com.biz.credit.domain.DNodeParam">
+        <result column="param_code" property="code"/>
+        <result column="GROUP_CONCAT(b.param_code)" property="fields"/>
+        <result column="param_name" property="name"/>
+        <result column="MAX(b.required)" property="required"/>
+    </resultMap>
+    <select id="queryParamsList" resultMap="nodeParam_list">
+        select d.param_code, d.param_name,GROUP_CONCAT(b.param_code),MAX(b.required)
+        from api_admin.api m
+        inner join api_admin.api_request b ON  m.id = b.api_id and b.status=1
+        inner join api_admin.api_request_map c on b.param_code = c.param_code
+        inner join api_admin.api_param_cfg d ON c.param_cfg_code = d.param_code and d.status=1
+        where
+        m.prod_code =#{apiProdCode}  AND  m.version =#{apiVersion}
+        GROUP BY d.param_code, d.param_name
+    </select>
+
+    <select id="queryById" resultType="com.biz.credit.vo.DNodeVO">
+        select node_id,node_name,node_desc,node_order,flow_id,exec_next_node,status from t_d_node
+        where node_id = #{nodeId}
+    </select>
+    <update id="updateParam">
+        update t_d_node_params set status = 0
+        where node_id = #{nodeId}
+    </update>
+
+    <select id="queryCount" parameterType="com.biz.credit.vo.DNodeVO" resultType="int">
+        select count(*) from t_d_node where flow_id = #{nodeVO.flowId} and node_name = #{nodeVO.nodeName}
+        and status = 1
+        <if test="nodeVO.nodeId != null">
+            and node_id != #{nodeVO.nodeId}
+        </if>
+    </select>
+</mapper>

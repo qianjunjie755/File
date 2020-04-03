@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.DTableDAO">
+    <resultMap id="table_list" type="com.biz.credit.vo.DTableVO">
+        <result column="name" property="projectName" />
+        <result column="table_id" property="tableId" />
+        <result column="table_name" property="tableName" />
+        <result column="table_desc" property="tableDesc" />
+        <result column="table_version" property="tableVersion" />
+        <result column="return_type" property="returnType"/>
+        <result column="return_field" property="returnField"/>
+        <result column="field_type" property="fieldType"/>
+        <result column="project_id" property="projectId"/>
+        <result column="api_code" property="apiCode"/>
+        <result column="user_id" property="userId"/>
+        <result column="status" property="status"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="choose" property="choose"/>
+        <result column="judge" property="judge"/>
+        <result column="type" property="type"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="dTableVO.tableId" parameterType="com.biz.credit.vo.DTableVO">
+        insert into t_d_table (table_name, table_version, table_desc, return_type, return_field, field_type,project_id,
+        api_code, user_id, status, update_time,create_time)
+       values(#{dTableVO.tableName},#{dTableVO.tableVersion},#{dTableVO.tableDesc},#{dTableVO.returnType},#{dTableVO.returnField},
+       #{dTableVO.fieldType},#{dTableVO.projectId},#{dTableVO.apiCode},#{dTableVO.userId},#{dTableVO.status},now(),now())
+    </insert>
+    <update id="update" parameterType="com.biz.credit.vo.DTableVO">
+        update  t_d_table t
+        SET
+        <if test="dTableVO.tableName != null and dTableVO.tableName != ''">
+            t.table_name=#{dTableVO.tableName},
+        </if>
+        <if test="dTableVO.tableDesc != null">
+            t.table_desc=#{dTableVO.tableDesc},
+        </if>
+        <if test="dTableVO.returnType != null">
+            t.return_type=#{dTableVO.returnType},
+        </if>
+        <if test="dTableVO.returnField != null">
+            t.return_field=#{dTableVO.returnField},
+        </if>
+        <if test="dTableVO.fieldType != null">
+            t.field_type=#{dTableVO.fieldType},
+        </if>
+        <if test="dTableVO.status != null">
+            t.status=#{dTableVO.status},
+        </if>
+        t.update_time=now()
+        where t.table_id=#{dTableVO.tableId}
+    </update>
+    <select id="queryTableVersion" parameterType="com.biz.credit.vo.DTableVO"  resultType="java.lang.Integer">
+        select count(1)
+        from t_d_table
+        where status!=2 and table_name= #{dTableVO.tableName} and table_version = #{dTableVO.tableVersion} and project_id= #{dTableVO.projectId};
+    </select>
+    <select id="queryById" resultMap="table_list">
+        select t.table_id,t.table_name,t.table_version,t.table_desc,t.return_type,t.return_field,t.field_type,t.project_id,t.api_code,t.user_id,t.status,
+        t.update_time,t.create_time
+        from t_d_table t
+        where t.table_id = #{tableId}
+    </select>
+    <select id="queryTableList" parameterType="com.biz.credit.vo.DTableVO" resultMap="table_list">
+        select * from
+        (select t.table_id,t.table_name,t.table_version,t.table_desc,t.return_type,t.return_field,t.field_type,
+        t.project_id,t.api_code,t.user_id,t.status,t.update_time,t.create_time
+        from t_d_table t
+        where t.status != 2 and t.api_code=#{dTableVO.apiCode}
+        <if test="dTableVO.projectId != null">
+          and t.project_id =#{dTableVO.projectId}
+        </if>
+        order by t.table_version desc limit 99999999) a
+        group by a.table_name order by a.update_time desc
+    </select>
+    <select id="existTableName"   resultType="java.lang.Integer">
+        select count(*)
+        from t_d_table t
+        where t.status !=2 and t.table_name = #{tableName} and t.project_id=#{projectId}
+    </select>
+    <select id="queryMaxVersionByTableName" parameterType="string" resultType="java.lang.String">
+        select max(table_version) from t_d_table t where  t.table_name = #{tableName} and t.status != 2
+    </select>
+
+    <select id="queryVersionListByTableName" parameterType="com.biz.credit.vo.DTableVO" resultType="com.biz.credit.vo.DTableVO">
+        select t.table_id,t.table_name,t.table_version,t.table_desc,t.return_type,t.return_field,t.field_type,
+        t.project_id,t.api_code,t.user_id,t.status,t.update_time,t.create_time
+        from t_d_table t
+        where t.status!=2 and t.table_name = #{dTableVO.tableName} and t.project_id= #{dTableVO.projectId} order by t.table_version asc
+    </select>
+
+    <select id="queryTableConfig"  resultMap="table_list">
+        select p.name,t.table_id,t.table_name,t.table_version,t.table_desc,t.return_type,t.return_field,t.field_type,t.project_id,t.api_code,t.user_id,t.status,
+        t.update_time,t.create_time
+        from t_d_table t
+		inner join t_project p on t.project_id=p.id and p.status=1
+        where t.status = 1 and t.api_code = #{apiCode}
+		order by p.name,t.table_name,t.table_version asc;
+    </select>
+    <select id="findTableConfig"  parameterType="com.biz.credit.domain.DNodeModel"  resultMap="table_list">
+       select p.name,t.table_id,t.table_name,t.table_version,t.table_desc,t.return_type,t.return_field,t.field_type,t.project_id,t.api_code,t.user_id,
+        t.update_time,t.create_time,case when m.model_code is null then false else true end as choose,th.judge,th.type
+        from t_d_table t
+        inner join t_project p on t.project_id=p.id and p.status=1
+        left join t_d_node_model m
+        on m.model_type = #{dNodeModel.modelType}
+        and m.node_id = #{dNodeModel.nodeId}
+        and m.model_code = t.table_id and m.status = 1
+        left join t_d_threshold th on th.model_id = m.model_id
+        where t.status = 1 and t.api_code =#{dNodeModel.apiCode}
+        order by p.name,t.table_name,t.table_version asc;
+    </select>
+
+
+    <update id="deleteTableByTableId" >
+        update  t_d_table t
+        SET
+        t.status=2,
+        t.update_time=now()
+        where t.table_id=#{tableId}
+    </update>
+
+    <select id="queryListByProjectId" resultType="com.biz.credit.domain.DTable">
+        select t.table_id,t.table_name,t.table_version,t.table_desc,t.return_type,t.return_field,t.field_type,t.project_id,t.api_code,t.user_id,t.status,
+        t.update_time,t.create_time
+        from t_d_table t
+        where t.project_id = #{projectId} and t.status != 2
+    </select>
+</mapper>

@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.StrategyDAO">
+        <resultMap id="strategy_map"  type="com.biz.credit.vo.StrategyVO">
+            <result property="strategyId" column="strategy_id" />
+            <result property="strategyCode" column="strategy_code" />
+            <result property="businessCode" column="business_code" />
+            <result property="strategyName" column="strategy_name" />
+            <result property="strategyStatus" column="strategy_status" />
+            <result property="taskDescription" column="task_description" />
+            <result property="calcLogic" column="calc_logic" />
+            <result property="userId" column="user_id" />
+            <result property="apiCode" column="api_code" />
+            <result property="sourceStrategyId" column="source_strategy_id" />
+            <result property="isTemplate" column="is_template" />
+            <result property="description" column="description" />
+            <result property="lastUpdateTime" column="last_update_time" />
+            <result property="createTime" column="create_time" />
+            <result property="industryId" column="industry_id" />
+            <result property="doScore" column="do_score" />
+        </resultMap>
+
+        <resultMap id="ruleSet_map" type="com.biz.credit.vo.RuleSetVO">
+            <result property="ruleSetId" column="rule_set_id" />
+            <result property="ruleSetName" column="rule_set_name" />
+            <result property="ruleSetCode" column="rule_set_code" />
+            <result property="ruleSetCode" column="rule_set_code" />
+            <result property="calcLogic" column="calc_logic" />
+            <result property="userId" column="user_id" />
+            <result property="apiCode" column="api_code" />
+            <result property="srcRuleSetId" column="src_rule_set_id" />
+            <result property="isTemplate" column="is_template" />
+            <result property="apiProdCode" column="api_prod_code" />
+            <result property="apiVersion" column="api_version" />
+            <result property="description" column="description" />
+            <result property="lastUpdateTime" column="last_update_time" />
+            <result property="createTime" column="create_time" />
+            <result property="priority" column="priority" />
+        </resultMap>
+
+        <insert id="addStrategy"  useGeneratedKeys="true" keyProperty="strategy.strategyId"  parameterType="com.biz.credit.vo.StrategyVO">
+            INSERT INTO t_strategy
+            (strategy_code,
+             business_code,
+             strategy_name,
+             strategy_status,
+             task_description,
+             calc_logic,
+             user_id,
+             api_code,
+             source_strategy_id,
+             is_template,
+             description,
+             last_update_time,
+             create_time,
+             industry_id,do_score)
+            VALUES
+                (#{strategy.strategyCode},
+                    #{strategy.businessCode},
+                    #{strategy.strategyName},
+                    #{strategy.strategyStatus},
+                    #{strategy.taskDescription},
+                    #{strategy.calcLogic},
+                    #{strategy.userId},
+                    #{strategy.apiCode},
+                    #{strategy.sourceStrategyId},
+                    #{strategy.isTemplate},
+                    #{strategy.description},
+                 now(),
+                 now(),
+                    #{strategy.industryId},#{strategy.doScore})
+        </insert>
+
+        <insert id="relateRuleSet"  useGeneratedKeys="true" keyProperty="strategyRuleSet.strategyRuleSetId"  parameterType="com.biz.credit.domain.StrategyRuleSet">
+            INSERT INTO t_strategy_rule_set
+            (strategy_id,
+             rule_set_id,
+             description,
+             last_update_time,
+             create_time)
+            VALUES
+                (#{strategyRuleSet.strategyId},
+                 #{strategyRuleSet.ruleSetId},
+                 #{strategyRuleSet.description},
+                 now(),
+                 now())
+        </insert>
+
+        <insert id="relateRuleSetList"  useGeneratedKeys="true" keyProperty="strategyRuleSet.strategyRuleSetId"  parameterType="java.util.List">
+            INSERT INTO t_strategy_rule_set
+            (strategy_id,
+            rule_set_id,
+            description,
+            last_update_time,
+            create_time)
+            VALUES
+            <foreach collection ="list" item="strategyRuleSet" index="index" separator=",">
+                (#{strategyRuleSet.strategyId},
+                #{strategyRuleSet.ruleSetId},
+                #{strategyRuleSet.description},
+                now(),
+                now())
+            </foreach>
+        </insert>
+
+
+        <update id="updateStrategy" parameterType="com.biz.credit.vo.StrategyVO">
+            update t_strategy
+            set
+                business_code = #{strategy.businessCode},
+                strategy_name = #{strategy.strategyName},
+                task_description = #{strategy.taskDescription},
+                calc_logic = #{strategy.calcLogic},
+                description = #{strategy.description},
+                last_update_time = now()
+            where strategy_id = #{strategy.strategyId}
+        </update>
+
+        <update id="updateStrategyState" parameterType="com.biz.credit.vo.StrategyVO">
+            update t_strategy
+            set
+                strategy_status = #{strategyStatus},
+                last_update_time = now()
+            where strategy_id = #{strategyId}
+        </update>
+        <update id="updateStrategyForCopyStrategy" parameterType="com.biz.credit.vo.StrategyVO">
+            update t_strategy
+            set
+                source_strategy_id=strategy_id,
+                last_update_time=now()
+            where api_code=#{strategy.apiCode} and is_template=1 and user_id=#{strategy.userId} and strategy_id=#{strategy.strategyId}
+        </update>
+
+        <delete id="deleteRuleSetByStrategy" parameterType="com.biz.credit.vo.StrategyVO" >
+            DELETE FROM t_strategy_rule_set
+            WHERE
+                strategy_id = #{strategy.strategyId}
+        </delete>
+        <delete id="deleteRelateRuleSet"  parameterType="com.biz.credit.domain.StrategyRuleSet">
+            delete from t_strategy_rule_set where strategy_id=#{strategyRuleSet.strategyId} and rule_set_id=#{strategyRuleSet.ruleSetId};
+        </delete>
+
+        <select id="findStrategy" resultMap="strategy_map" parameterType="com.biz.credit.vo.StrategyVO">
+            select
+            t.strategy_id,
+            t.strategy_code,
+            t.business_code,
+            t.strategy_name,
+            t.strategy_status,
+            t.task_description,
+            t.calc_logic,
+            t.user_id,
+            t.api_code,
+            t.source_strategy_id,
+            t.is_template,
+            t.description,
+            date_format(t.last_update_time,'%Y-%m-%d %T') last_update_time,
+            date_format(t.create_time,'%Y-%m-%d %T') create_time,t.industry_id,t.do_score
+            from t_strategy t
+            WHERE
+            t.strategy_id = #{strategyId}
+            <if test="null != userId">
+                and t.user_id = #{userId}
+            </if>
+            <if test="null != apiCode">
+                and t.api_code = #{apiCode}
+            </if>
+        </select>
+
+        <select id="findRuleSetByStrategy" resultMap="ruleSet_map" parameterType="com.biz.credit.vo.StrategyVO">
+            select
+                t2.rule_set_id,t2.rule_set_code, t2.rule_set_name, t2.calc_logic, t2.user_id,t2.api_code, t2.src_rule_set_id, t2.is_template,
+                t2.api_prod_code,t2.api_version,t2.description, date_format(t2.last_update_time,'%Y-%m-%d %T') last_update_time,
+                                                                date_format(t2.create_time,'%Y-%m-%d %T') create_time,t2.priority
+            from t_strategy_rule_set t1
+                inner join t_rule_set t2 on t1.rule_set_id = t2.rule_set_id
+            WHERE
+                t1.strategy_id = #{strategy.strategyId}
+        </select>
+
+        <select id="findAllStrategy" resultMap="strategy_map" parameterType="com.biz.credit.vo.StrategyVO">
+            select
+                t.strategy_id,
+                t.strategy_code,
+                t.strategy_name,
+                t.description
+            from t_strategy t
+            WHERE
+                t.api_code = #{strategy.apiCode} AND t.is_template = #{strategy.isTemplate}
+        </select>
+    <select id="queryFlowParams" resultType="com.biz.credit.vo.ParamVO">
+        SELECT m.flow_id,
+               m.flow_name,
+               m.module_type_id,
+               m.code,
+               m.name,
+               n.param_type AS type,
+               m.required
+          FROM (SELECT a.flow_id, a.flow_name, d.module_type_id, c.code, c.name, MAX(c.required) AS required
+                  FROM t_d_flow a
+                 INNER JOIN t_d_node b
+                    ON a.flow_id = b.flow_id
+                   AND b.status = 1
+                 INNER JOIN t_d_node_params c
+                    ON b.node_id = c.node_id
+                   AND c.status = 1
+                 INNER JOIN module_type d
+                    ON a.flow_id = d.flow_id
+                 INNER JOIN module_type_api e
+                    ON d.module_type_id = e.module_type_id
+                   AND a.api_code = e.api_code
+                   AND e.status = 1
+                 WHERE a.status = 1
+                   AND a.api_code = #{apiCode}
+                 <if test="null != flowId">
+                   AND a.flow_id = #{flowId}
+                 </if>
+                 GROUP BY a.flow_id, a.flow_name, d.module_type_id, c.code, c.name) m
+         INNER JOIN api_admin.api_param_cfg n
+            ON m.code = n.param_code
+           AND n.status = 1
+         ORDER BY m.flow_id, n.param_type, n.param_order
+    </select>
+    <select id="queryProductByFlowId" resultType="com.biz.credit.vo.ProductVO">
+        SELECT a.prod_code, a.prod_name, a.report_type FROM module_type a INNER JOIN module_type_api b
+        ON a.module_type_id = b.module_type_id WHERE a.flow_id = #{flowId} AND b.api_code = #{apiCode} limit 1
+    </select>
+    <select id="queryBasicInfo" resultType="com.biz.decision.entity.EntityBasic">
+        SELECT * FROM t_entity_basic_info t
+         WHERE t.company_name = #{companyName}
+         ORDER BY update_time DESC LIMIT 1
+    </select>
+
+</mapper>

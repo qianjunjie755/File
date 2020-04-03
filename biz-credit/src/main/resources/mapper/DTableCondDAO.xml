@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.DTableCondDAO">
+    <resultMap id="dTableCond_info" type="com.biz.credit.domain.DTableCond">
+        <result column="id" property="id" />
+        <result column="var_id" property="varId" />
+        <result column="cond_judge" property="condJudge" />
+        <result column="cond_order" property="condOrder"/>
+        <result column="out_value" property="outValue"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="table_id" property="tableId"/>
+        <result column="status" property="status"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+    <insert id="insertCond" useGeneratedKeys="true" keyProperty="dTableCond.id" parameterType="com.biz.credit.domain.DTableCond">
+       insert into t_d_table_cond(var_id, cond_judge, cond_order, out_value,  parent_id,table_id, status,update_time,
+        create_time)
+       values(#{dTableCond.varId},#{dTableCond.condJudge},#{dTableCond.condOrder},#{dTableCond.outValue},#{dTableCond.parentId},#{dTableCond.tableId},
+       #{dTableCond.status},now(),now())
+    </insert>
+
+    <select id="queryByParentId" parameterType="com.biz.credit.domain.DTableCond" resultType="java.lang.Long">
+        select id
+        from t_d_table_cond
+        where table_id=#{dTableCond.tableId} and var_id = #{dTableCond.varId} and cond_order=#{dTableCond.parentCondOrder}
+    </select>
+    <update id="updateCond" parameterType="java.lang.Long">
+        update  t_d_table_cond
+        SET  status = 0
+        where table_Id=#{tableId}
+    </update>
+
+    <select id="queryCond" parameterType="com.biz.credit.domain.DTableVar" resultMap="dTableCond_info">
+        select id,var_id,cond_judge,cond_order,out_value,parent_id,table_id,status,update_time,create_time
+        from t_d_table_cond
+        where status=1 and table_id=#{dTableVar.tableId} and var_id = #{dTableVar.varId}
+    </select>
+    <select id="queryCondList"  resultMap="dTableCond_info">
+        select id,var_id,cond_judge,cond_order,out_value,parent_id,table_id,status,update_time,create_time
+        from t_d_table_cond
+        where status=1 and table_id=#{tableId}
+    </select>
+    <select id="queryParentCondOrder" parameterType="com.biz.credit.domain.DTableCond" resultType="java.lang.Integer">
+        select cond_order
+        from t_d_table_cond
+        where status=1 and table_id=#{dTableCond.tableId}  and id = #{dTableCond.parentId}
+    </select>
+    <select id="queryChildrenCond" parameterType="com.biz.credit.domain.DTableCond" resultType="java.lang.Integer">
+        select count(*)
+        from t_d_table_cond
+        where status=1 and cond_judge='=缺失值' and table_id=#{dTableCond.tableId} and parent_id = #{dTableCond.id}
+    </select>
+    <select id="queryCondIsDefault" parameterType="com.biz.credit.domain.DTableCond" resultType="java.lang.Integer">
+        select count(*)
+        from t_d_table_cond
+        where status=1 and cond_judge='=缺失值' and table_id=#{dTableCond.tableId} and id = #{dTableCond.id}
+    </select>
+</mapper>

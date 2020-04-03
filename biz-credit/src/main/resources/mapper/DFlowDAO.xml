@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.DFlowDAO">
+    <select id="findDFlowVOList" resultType="com.biz.credit.vo.DFlowVO">
+        select flow_id, flow_name, flow_desc, radar_id, related_p, api_code, user_id, status, update_time, create_time,platform_id,biz_id,link_id from t_d_flow
+        <where>
+            <choose>
+                <when test="dFlowVO.status!=null and dFlowVO.status=-1">
+                    1=1
+                </when>
+                <otherwise>
+                    status=1
+                </otherwise>
+            </choose>
+            <if test="null != dFlowVO.apiCode">
+                and api_code=#{dFlowVO.apiCode}
+            </if>
+            <if test="null != dFlowVO.flowId">
+                and flow_id=#{dFlowVO.flowId}
+            </if>
+        </where>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="flow.flowId" parameterType="com.biz.credit.vo.DFlowVO">
+        INSERT INTO t_d_flow(flow_name, flow_desc, api_code, user_id, status,
+        update_time, create_time
+        <if test="flow.platformId != null and flow.platformId !=0">
+            ,platform_id
+        </if>
+        <if test="flow.bizId != null and flow.bizId !=0">
+            ,biz_id
+        </if>
+        <if test="flow.linkId != null and flow.linkId !=0">
+            ,link_id
+        </if>
+        ) VALUES
+        (#{flow.flowName},#{flow.flowDesc},#{flow.apiCode},#{flow.userId},#{flow.status},now(),now()
+        <if test="flow.platformId != null and flow.platformId !=0">
+        ,#{flow.platformId}
+        </if>
+        <if test="flow.bizId != null and flow.bizId !=0">
+            ,#{flow.bizId}
+        </if>
+        <if test="flow.linkId != null and flow.linkId !=0">
+            ,#{flow.linkId}
+        </if>
+        )
+    </insert>
+
+    <update id="update" parameterType="com.biz.credit.vo.DFlowVO">
+        update t_d_flow set
+        <if test="flow.flowName != null and flow.flowName != ''">
+            flow_name = #{flow.flowName},
+        </if>
+        <if test="flow.flowDesc != null">
+            flow_desc = #{flow.flowDesc},
+        </if>
+        <if test="flow.radarId != null">
+            radar_id = #{flow.radarId},
+        </if>
+        <if test="flow.relatedP != null">
+            related_p = #{flow.relatedP},
+        </if>
+        <if test="flow.status != null">
+            status = #{flow.status},
+        </if>
+        <if test="flow.platformId != null and flow.platformId !=0">
+            ,platform_id=#{flowVO.platformId}
+        </if>
+        <if test="flow.bizId != null and flow.bizId !=0">
+            ,biz_id=#{flowVO.bizId}
+        </if>
+        <if test="flow.linkId != null and flow.linkId !=0">
+            ,link_id=#{flowVO.linkId}
+        </if>
+        update_time = now()
+        where flow_id = #{flow.flowId}
+    </update>
+
+    <select id="queryList" parameterType="com.biz.credit.vo.DFlowVO" resultType="com.biz.credit.vo.DFlowVO">
+        select flow_id,flow_name,flow_desc,radar_id,related_p,api_code,user_id,status,platform_id,biz_id,link_id
+        from t_d_flow where api_code = #{flow.apiCode} and status != 2
+        <if test="flow.flowName !=null and flow.flowName != ''">
+            and flow_name like concat('%',#{flow.flowName},'%')
+        </if>
+        order by update_time desc
+    </select>
+
+    <select id="getById" resultType="com.biz.credit.vo.DFlowVO">
+        select flow_id,flow_name,flow_desc,radar_id,related_p,api_code,user_id,status,platform_id,biz_id,link_id
+        from t_d_flow where flow_id = #{flowId}
+    </select>
+
+    <select id="queryCountByName" resultType="int">
+        select count(*) from t_d_flow where flow_name = #{flowName} and status != 2 and api_code = #{apiCode}
+    </select>
+</mapper>

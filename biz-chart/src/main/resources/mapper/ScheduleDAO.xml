@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.chart.repository.ScheduleDAO">
+    <select id="queryCleanCharts" resultType="java.lang.Long">
+        <![CDATA[SELECT CHART_ID
+                   FROM T_CHART
+                  WHERE CREATE_TIME <= DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY)
+                    AND STATUS <> 2
+                    AND IS_CLEAN = 0
+                    AND CHART_ID >= #{startId}
+                  ORDER BY CHART_ID LIMIT 1000]]>
+    </select>
+    <update id="updateChartClean">
+        UPDATE T_CHART SET IS_CLEAN = 1 WHERE CHART_ID = #{chartId}
+    </update>
+</mapper>

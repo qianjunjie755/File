@@ -1,0 +1,77 @@
+server:
+  port: 8765
+  servlet:
+      context-path: /risk_warning
+
+eureka:
+  instance:
+     hostname: 127.0.0.1
+  client:
+    serviceUrl:
+      defaultZone: http://127.0.0.1:8761/eureka/
+
+spring:
+  application:
+    name: warning-service
+  redis:
+    jedis:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+        max-wait: -1ms
+    timeout: 10000ms
+    cluster:
+      nodes:
+        - 10.0.110.218:7000
+        - 10.0.110.218:7001
+        - 10.0.110.218:7002
+        - 10.0.110.218:7003
+        - 10.0.110.218:7004
+        - 10.0.110.218:7005
+  mvc:
+    date-format: yyyy-MM-dd HH:mm:ss
+  thymeleaf:
+    cache: false
+  datasource:
+    name: test
+    url: jdbc:mysql://10.0.110.219:3306/risk_warning?useAffectedRows=true&useUnicode=true&characterEncoding=UTF-8&rewriteBatchedStatements=true
+    username: bairong
+    password: BaiRong@100credit.com
+  mail:
+    host: smtp.100credit.com
+    username: bizauth@100credit.com
+    password: Bairong@7H
+
+upload_root_path: C:\workspace
+schedule_run: 0
+
+biz:
+  api-code: 600028
+  task:
+    prod-code: BizWarning
+    prod-name: 贷中预警
+    app-code: biz-warning
+    queue-name: "{biz:warning:queue}:queue"
+    rank-rule-queue-name: "{biz:warning:queue}:rankQueue:rule"
+    rank-entity-queue-name: "{biz:warning:queue}:rankQueue:entity"
+    check-url: http://10.0.110.219:12010/biz/v1/get_data
+    query-url: http://10.0.110.219:12020/biz_derive/v1/query_data
+    result-url: http://10.0.110.219:12020/biz_derive/v1/get_result
+    submit-url: http://10.0.110.219:12030/biz_app/v1/submit
+    notify-url: http://10.0.110.219:12030/biz_app/v1/notify
+    wait-minutes: 10
+    all-api-key: "{biz:warning:init}:allApis"
+    score-api-key: "{biz:warning:init}:scoreApis"
+    all-strategy-key: "{biz:warning:init}:riskStrategies"
+    rules:
+      priority-filter: true
+    engine:
+      core-pool-size: 16
+      max-pool-size: 32
+      keep-alive-time: 10
+  warning:
+    task-crontab: "0 10 0 * * *"
+    query-detail-url: http://10.0.110.219:12010/biz/v1/get_data
+    ws:
+       warn-notes-key: "{biz:warning:ws:warn-note}:list"

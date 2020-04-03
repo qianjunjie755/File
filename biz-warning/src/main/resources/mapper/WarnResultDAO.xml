@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper  namespace="com.biz.warning.dao.WarnResultDAO">
+
+    <resultMap id="warn_result_variable_map" type="com.biz.warning.domain.WarnResultVariable" >
+        <result property="warnResultVariableId" column="warn_result_variable_id" />
+        <result property="hitTime" column="hit_time" />
+        <result property="ruleId" column="rule_id" />
+        <result property="ruleSetId" column="rule_set_id" />
+        <result property="strategyId" column="strategy_id" />
+        <result property="variableId" column="variable_id" />
+        <result property="variableCode" column="variable_code" />
+        <result property="threshold" column="threshold" />
+        <result property="triggerThreshold" column="trigger_threshold" />
+        <result property="taskId" column="task_id" />
+        <result property="entityId" column="entity_id" />
+        <result property="description" column="description" />
+        <result property="lastUpdateTime" column="last_update_time" />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+
+    <resultMap id="warn_result_variableVO_map" type="com.biz.warning.vo.WarnResultVariableVO" >
+        <result property="warnResultVariableId" column="warn_result_variable_id" />
+        <result property="hitTime" column="hit_time" />
+        <result property="ruleName" column="rule_name" />
+        <result property="ruleSetName" column="rule_set_name" />
+        <result property="strategyName" column="strategy_name" />
+        <result property="variableName" column="variable_name" />
+        <result property="threshold" column="threshold" />
+        <result property="triggerThreshold" column="trigger_threshold" />
+        <result property="taskName" column="task_name" />
+        <result property="entityName" column="entity_name" />
+        <result property="description" column="description" />
+        <result property="lastUpdateTime" column="last_update_time" />
+        <result property="createTime" column="create_time" />
+        <result property="period" column="period" />
+        <result property="periodUnit" column="period_unit" />
+        <result property="variableSourceName" column="source_name" />
+        <result property="entityId" column="entity_id" />
+        <result property="detailExisted" column="detail_existed" />
+        <result property="entityStatus" column="entity_status" />
+    </resultMap>
+
+    <resultMap id="warn_result_ruleVO_map" type="com.biz.warning.vo.WarnResultRuleCountVO" >
+        <result property="srcRuleId" column="src_rule_id" />
+        <result property="ruleCode" column="rule_code" />
+        <result property="taskId" column="task_id" />
+        <result property="ruleName" column="rule_name" />
+        <result property="description" column="description" />
+        <result property="execCount" column="exec_count" />
+        <result property="hitCount" column="hit_count" />
+    </resultMap>
+
+    <resultMap id="warn_result_variable_countVO_map" type="com.biz.warning.vo.WarnResultVariableCountVO" >
+        <result property="variableCode" column="variable_code" />
+        <result property="variableName" column="variable_name" />
+        <result property="threshold" column="threshold" />
+        <result property="taskId" column="task_id" />
+        <result property="execCount" column="exec_count" />
+        <result property="hitCount" column="hit_count" />
+    </resultMap>
+
+    <resultMap id="rule_map" type="com.biz.warning.domain.Rule">
+        <result property="ruleId" column="rule_id" />
+        <result property="ruleCode" column="rule_code" />
+        <result property="ruleName" column="rule_name" />
+        <result property="businessCode" column="business_code" />
+        <result property="version" column="version" />
+        <result property="calcLogic" column="calc_logic" />
+        <result property="userId" column="user_id" />
+        <result property="apiCode" column="api_code" />
+        <result property="srcRuleId" column="src_rule_id" />
+        <result property="ruleState" column="rule_state" />
+        <result property="isTemplate" column="is_template" />
+        <result property="description" column="description" />
+        <result property="lastUpdateTime" column="last_update_time" />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+
+
+    <select id="findWarnResultVariable" resultMap="warn_result_variableVO_map">
+        select t.warn_result_variable_id, t.hit_time, tr.rule_name rule_name, trs.rule_set_name rule_set_name, tvp.variable_name variable_name,
+        t.threshold,t.trigger_threshold, t.task_id, te.entity_name entity_name,t.description, t.last_update_time, t.create_time
+        from risk_warning.t_warn_result_variable t,risk_warning.t_variable_pool tvp,risk_warning.t_rule_set trs,risk_warning.t_rule tr,risk_warning.t_entity te
+        where t.variable_code = tvp.variable_code and t.rule_set_id = trs.rule_set_id
+        and t.rule_id = tr.rule_id and t.entity_id = te.entity_id
+
+        <if test="null != entityId">
+            and t.entity_id = #{entityId}
+        </if>
+        <if test="null != taskId">
+            and t.task_id = #{taskId}
+        </if>
+        <if test="null != period">
+            and t.hit_time >= date_format(#{period},'%Y-%m-%d %T')
+        </if>
+        order by t.hit_time
+    </select>
+    <select id="findWarnResultVariableByTask" parameterType="com.biz.warning.vo.WarnResultVariableVO" resultMap="warn_result_variableVO_map" >
+        select te.entity_id,t.warn_result_variable_id,date_format(t.hit_time,'%Y-%m-%d') hit_time,tvp.variable_name variable_name,t.threshold,
+        t.trigger_threshold, t.task_id, te.entity_name entity_name,t.description,date_format(t.last_update_time,'%Y-%m-%d %H:%i:%s') last_update_time,
+        date_format(t.create_time,'%Y-%m-%d %H:%i:%s') create_time,t.period,t.period_unit,r.rule_name,rs.rule_set_name,vs.source_name,t.detail_existed,te.entity_status
+        from risk_warning.t_warn_result_variable t
+        inner join risk_warning.t_variable_pool tvp on tvp.variable_code=t.variable_code
+        inner join risk_warning.t_variable_source vs on vs.source_id=tvp.source_id
+        inner join risk_warning.t_entity te on te.entity_id=t.entity_id
+        inner join risk_warning.t_rule r on r.rule_id=t.rule_id
+        inner join risk_warning.t_rule_set rs on rs.rule_set_id=t.rule_set_id
+        where   1=1
+        <if test="null != wrv.entityStatus and 0 != wrv.entityStatus">
+            and te.entity_status=#{wrv.entityStatus}
+        </if>
+        <if test="null != wrv.userId">
+           and te.user_id=#{wrv.userId}
+        </if>
+        <if test="null != wrv.apiCode and '' != wrv.apiCode" >
+            and te.api_code=#{wrv.apiCode}
+        </if>
+        <if test="null != wrv.userIds and '' != wrv.userIds">
+            and te.user_id in
+            <foreach collection="wrv.userIdList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="null != wrv.taskId">
+           and t.task_id=#{wrv.taskId}
+        </if>
+        <if test="null != wrv.ruleId and 0 != wrv.ruleId ">
+            and t.rule_id = #{wrv.ruleId}
+        </if>
+        <if test="null != wrv.ruleSetId and 0 != wrv.ruleSetId">
+            and t.rule_set_id = #{wrv.ruleSetId}
+        </if>
+        <if test="null != wrv.variableCode and 0 != wrv.variableCode">
+            and t.variable_code = #{wrv.variableCode}
+        </if>
+        <if test="null != wrv.startDate and '' != wrv.startDate">
+            and t.hit_time &gt;= #{wrv.startDate}
+        </if>
+        <if test="null != wrv.endDate and '' != wrv.endDate">
+            and t.hit_time &lt;= #{wrv.endDate}
+        </if>
+        <if test="null != wrv.entityName and '' != wrv.entityName">
+            and te.entity_name like concat('%',concat(#{wrv.entityName},'%'))
+        </if>
+        <if test="null != wrv.ruleName and '' != wrv.ruleName">
+            and r.rule_name like concat('%',concat(#{wrv.ruleName},'%'))
+        </if>
+        <if test="null != wrv.ruleSetName and '' != wrv.ruleSetName">
+            and rs.rule_set_name like concat('%',concat(#{wrv.ruleSetName},'%'))
+        </if>
+        <if test="null != wrv.variableName and '' != wrv.variableName">
+            and tvp.variable_name like concat('%',concat(#{wrv.variableName},'%'))
+        </if>
+        <if test="null == wrv.variableSourceId or 0 != wrv.variableSourceId">
+          <if test="null != wrv.variableSourceIds" >
+              and tvp.source_id in
+              <foreach collection="wrv.variableSourceIds" index="index" item="item" open="(" separator="," close=")">
+                  #{item}
+              </foreach>
+          </if>
+        </if>
+        order by t.warn_result_variable_id desc
+    </select>
+
+
+    <select id="findWarnResultRule" resultMap="warn_result_ruleVO_map">
+        select
+        t.src_rule_id,tr.rule_code, tr.rule_name,tr.description,count(t.src_rule_id) hit_count
+        from t_warn_result_rule t,t_rule tr
+        where t.src_rule_id = tr.rule_id
+        <if test="null != entityId">
+            and t.entity_id = #{entityId}
+        </if>
+        <if test="null != taskId">
+            and t.task_id = #{taskId}
+        </if>
+        <if test="null != period">
+            and t.hit_time >= date_format(#{period},'%Y-%m-%d %T')
+        </if>
+        group by t.src_rule_id,tr.rule_code,tr.rule_name,tr.description
+    </select>
+
+    <select id="findRuleExecCount" resultType="java.lang.Long" >
+        SELECT
+        COUNT(*)
+        FROM t_rule_log t
+        WHERE t.src_rule_id = #{srcRuleId}
+        <if test="null != entityId">
+            and t.entity_id = #{entityId}
+        </if>
+        <if test="null != taskId">
+            and t.task_id = #{taskId}
+        </if>
+        <if test="null != period">
+            and t.exec_time >= date_format(#{period},'%Y-%m-%d %T')
+        </if>
+
+    </select>
+
+    <select id="findWarnResultVariableRule" resultMap="rule_map" parameterType="long">
+        SELECT
+        t.src_rule_id,tr.rule_name
+        FROM t_warn_result_variable t,t_rule tr
+        WHERE t.src_rule_id = tr.rule_id
+        <if test="null != entityId">
+            and t.entity_id = #{entityId}
+        </if>
+        <if test="null != taskId">
+            and t.task_id = #{taskId}
+        </if>
+        <if test="null != period">
+            and t.hit_time >= date_format(#{period},'%Y-%m-%d %T')
+        </if>
+        GROUP BY t.src_rule_id,tr.rule_name
+
+    </select>
+
+    <select id="findWarnResultVariableCount" resultMap="warn_result_variable_countVO_map">
+        SELECT
+        t.variable_code,tvp.variable_name,t.threshold, COUNT(t.variable_code) hit_count
+        FROM t_warn_result_variable t, t_variable_pool tvp
+        WHERE  t.src_rule_id = #{srcRuleId} AND t.variable_code = tvp.variable_code
+        <if test="null != entityId">
+            and t.entity_id = #{entityId}
+        </if>
+        <if test="null != taskId">
+            and t.task_id = #{taskId}
+        </if>
+        <if test="null != period">
+            and t.hit_time >= date_format(#{period},'%Y-%m-%d %T')
+        </if>
+        GROUP BY t.variable_code,tvp.variable_name,t.threshold
+    </select>
+
+    <select id="findWarnResultVariableByEntity" resultMap="warn_result_variableVO_map">
+            SELECT  w.warn_result_variable_id,w.detail_existed,DATE_FORMAT(w.hit_time,"%Y-%m-%d") hit_time,r.rule_name,vp.variable_name,v.threshold,t.task_name,w.trigger_threshold
+            FROM t_warn_result_variable w inner join t_entity e on w.entity_id = e.entity_id
+            inner join t_rule r on w.rule_id = r.rule_id inner join t_variable v on w.variable_id = v.variable_id
+            inner join t_variable_pool vp on w.variable_code = vp.variable_code inner join  t_task t on w.task_id = t.task_id
+            inner join t_variable_source vs on vs.source_id = vp.source_id
+            WHERE e.entity_name = #{warnResultVariableVO.entityName}
+              AND e.api_code = #{warnResultVariableVO.apiCode}
+            <if test="userIdList != null and userIdList.size > 0">
+                <![CDATA[ AND e.user_id in ]]>
+                <foreach collection="userIdList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="null != warnResultVariableVO.startDate and '' != warnResultVariableVO.startDate">
+               <![CDATA[ and date(w.hit_time) >= #{warnResultVariableVO.startDate} ]]>
+            </if>
+            <if test="null != warnResultVariableVO.endDate and '' != warnResultVariableVO.endDate">
+                <![CDATA[ and date(w.hit_time) <= #{warnResultVariableVO.endDate}  ]]>
+            </if>
+            <if test="null != warnResultVariableVO.ruleName and '' != warnResultVariableVO.ruleName">
+                and r.rule_name like concat("%",#{warnResultVariableVO.ruleName},"%")
+            </if>
+            <if test="null != warnResultVariableVO.hitTypeList">
+                <![CDATA[ AND vs.source_id in ]]>
+                <foreach collection="warnResultVariableVO.hitTypeList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="null != warnResultVariableVO.taskIdList">
+                <![CDATA[ AND t.task_id in ]]>
+                <foreach collection="warnResultVariableVO.taskIdList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            order by w.hit_time desc,w.warn_result_variable_id desc
+    </select>
+
+    <select id="findRiskSourceCount" resultType="map">
+        SELECT vs.source_id as sourceId,vs.source_name as sourceName,count(*) as hitCount
+        FROM t_warn_result_variable w inner join t_entity e on w.entity_id = e.entity_id
+        inner join t_rule r on w.rule_id = r.rule_id inner join t_variable v on w.variable_id = v.variable_id
+        inner join t_variable_pool vp on w.variable_code = vp.variable_code inner join  t_task t on w.task_id = t.task_id
+        inner join t_variable_source vs on vs.source_id = vp.source_id
+        WHERE e.entity_name = #{warnResultVariableVO.entityName}
+          AND e.api_code = #{warnResultVariableVO.apiCode}
+        <if test="userIdList != null and userIdList.size > 0">
+            <![CDATA[ AND e.user_id in ]]>
+            <foreach collection="userIdList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="null != warnResultVariableVO.startDate and '' != warnResultVariableVO.startDate">
+            <![CDATA[ and date(w.hit_time) >= #{warnResultVariableVO.startDate} ]]>
+        </if>
+        <if test="null != warnResultVariableVO.endDate and '' != warnResultVariableVO.endDate">
+            <![CDATA[ and date(w.hit_time) <= #{warnResultVariableVO.endDate}  ]]>
+        </if>
+        <if test="null != warnResultVariableVO.ruleName and '' != warnResultVariableVO.ruleName">
+            and r.rule_name like concat("%",#{warnResultVariableVO.ruleName},"%")
+        </if>
+        <if test="null != warnResultVariableVO.hitTypeList">
+            <![CDATA[ AND vs.source_id in ]]>
+            <foreach collection="warnResultVariableVO.hitTypeList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="null != warnResultVariableVO.taskIdList">
+            <![CDATA[ AND t.task_id in ]]>
+            <foreach collection="warnResultVariableVO.taskIdList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        group by vs.source_id order by vs.source_id
+    </select>
+
+</mapper>

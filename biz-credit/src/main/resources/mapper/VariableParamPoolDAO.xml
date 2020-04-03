@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.VariableParamPoolDAO">
+    <select id="findDescriptionListByParamNames" resultType="java.lang.String">
+        select group_concat(b.descrip separator '_') from
+        (select distinct a.description descrip from t_variable_param_pool a where a.param_name in
+        <foreach  item="item" collection="list" index="index"  open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        order by a.param_template_code asc) b
+    </select>
+</mapper>

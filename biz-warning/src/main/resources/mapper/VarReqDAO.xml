@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.warning.dao.VarReqDAO">
+    <select id="findListForTaskSchedule" parameterType="java.util.List" resultType="com.biz.warning.vo.VarReqVO">
+        select t.task_id taskId,t.strategy_id strategyId,t1.rule_set_id ruleSetId,t4.prod_code var,
+        ifnull(t3.threshold,t4.default_threshold) threshold,
+        t3.period `time`,t3.rule_id ruleId,t3.frequency_code intervalCode,
+        t3.variable_code variableCode,t4.version,
+        t3.variable_id variableId,t.api_code apiCode,
+        t4.query_url queryUrl,t4.result_url resultUrl
+        from risk_warning.t_task t
+        inner join risk_warning.t_strategy_rule_set t1
+        on t1.strategy_id = t.strategy_id
+        inner join risk_warning.t_ruleset_rule t2
+        on t2.rule_set_id=t1.rule_set_id
+        inner join risk_warning.t_variable t3
+        on t3.rule_id=t2.rule_id
+        inner join risk_warning.t_variable_pool t4
+        on t4.variable_code=t3.variable_code
+        where t.task_id in
+        <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <select id="findListForTemplateNameBuild" resultType="com.biz.warning.vo.VarReqVO">
+        select t4.variable_code variableCode
+        from risk_warning.t_task t
+            inner join risk_warning.t_strategy_rule_set t1
+                on t1.strategy_id = t.strategy_id
+            inner join risk_warning.t_ruleset_rule t2
+                on t2.rule_set_id=t1.rule_set_id
+            inner join risk_warning.t_variable t3
+                on t3.rule_id=t2.rule_id
+            inner join risk_warning.t_variable_pool t4
+                on t4.variable_code=t3.variable_code
+        where t.task_id
+
+    </select>
+    <select id="findListForTaskScheduleByTaskId" resultType="com.biz.warning.vo.VarReqVO">
+        select t.task_id taskId,t.strategy_id strategyId,t1.rule_set_id ruleSetId,t4.prod_code var,
+               ifnull(t3.threshold,t4.default_threshold) threshold,
+               t3.period `time`,t3.rule_id ruleId,t3.frequency_code intervalCode,t11.calc_logic ruleSetCalcLogic,
+               t11.src_rule_set_id srcRuleSetId,t12.calc_logic ruleCalcLogic,
+               t12.src_rule_id srcRuleId,
+               t3.variable_code variableCode,t4.version,
+               t3.variable_id variableId,t.api_code apiCode,
+               t4.query_url queryUrl,t4.result_url resultUrl
+        from risk_warning.t_task t
+            inner join risk_warning.t_strategy_rule_set t1
+                on t1.strategy_id = t.strategy_id
+            inner join risk_warning.t_rule_set t11
+                on t11.rule_set_id=t1.rule_set_id
+            inner join risk_warning.t_ruleset_rule t2
+                on t2.rule_set_id=t1.rule_set_id
+            inner join risk_warning.t_rule t12
+                on t12.rule_id=t2.rule_id
+            inner join risk_warning.t_variable t3
+                on t3.rule_id=t2.rule_id
+            inner join risk_warning.t_variable_pool t4
+                on t4.variable_code=t3.variable_code
+        where t.task_id=#{taskId}
+    </select>
+</mapper>

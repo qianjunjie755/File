@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.DTreeVarDAO">
+    <resultMap id="dTreeVar_info" type="com.biz.credit.domain.DTreeVar">
+        <result column="var_id" property="varId" />
+        <result column="tree_id" property="treeId" />
+        <result column="src_var_id" property="srcVarId" />
+        <result column="cond_type" property="condType"/>
+        <result column="status" property="status"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="variable_name" property="varName"/>
+        <result column="var_period" property="varPeriod" />
+        <result column="period_unit" property="periodUnit" />
+        <result column="api_prod_code" property="apiProdCode" />
+    </resultMap>
+    <insert id="insertVar" useGeneratedKeys="true" keyProperty="dTreeVar.varId" parameterType="com.biz.credit.domain.DTreeVar">
+       insert into t_d_tree_var(tree_id, src_var_id, cond_type, status, update_time,
+        create_time,var_period,period_unit)
+       values(#{dTreeVar.treeId},#{dTreeVar.srcVarId},#{dTreeVar.condType},
+       #{dTreeVar.status},now(),now(),#{dTreeVar.varPeriod},#{dTreeVar.periodUnit})
+    </insert>
+    <update id="updateVar" parameterType="java.lang.Long">
+        update  t_d_tree_var
+        set status=0
+        where tree_Id=#{treeId}
+    </update>
+    <resultMap id="nodeParam_list" type="com.biz.credit.domain.DNodeParam">
+        <result column="param_cfg_code" property="code"/>
+        <result column="GROUP_CONCAT(t.param_code)" property="fields"/>
+        <result column="param_name" property="name"/>
+        <result column="MAX(t.required)" property="required"/>
+    </resultMap>
+    <select id="queryByTreeId"  resultMap="nodeParam_list">
+        SELECT t.param_cfg_code, t.param_name,GROUP_CONCAT(t.param_code), MAX(t.required) FROM (
+		SELECT DISTINCT n.param_code, c.param_cfg_code, d.param_name, d.param_type, d.param_order, n.required FROM (
+        select b.api_prod_code,b.api_version
+		from t_d_tree_var t
+		inner join t_d_rule_var v on t.src_var_id=v.var_id and v.status=1
+		inner join t_variable_pool b on v.var_p_id=b.variable_code and b.valid=1
+		where t.status=1 and t.tree_id = #{treeId}
+		GROUP BY b.api_prod_code,b.api_version) m
+        INNER JOIN (SELECT a.prod_code, a.version, b.param_code, b.param_name, b.required FROM api_admin.api a
+        INNER JOIN api_admin.api_request b ON a.id = b.api_id and b.status=1) n ON m.api_prod_code = n.prod_code AND m.api_version = n.version
+        INNER JOIN api_admin.api_request_map c ON n.param_code = c.param_code
+        INNER JOIN api_admin.api_param_cfg d ON c.param_cfg_code = d.param_code  and d.status=1) t
+        GROUP BY param_cfg_code, param_name, param_type, param_order ORDER BY param_type, param_order;
+    </select>
+    <select id="queryById"  resultMap="dTreeVar_info">
+        select t.var_id,t.tree_id,t.src_var_id,t.cond_type,b.variable_name,t.var_period,t.period_unit,b.api_prod_code
+        from t_d_tree_var t
+        left join t_d_rule_var v on t.src_var_id=v.var_id
+		left join t_variable_pool b on v.var_p_id=b.variable_code
+        where t.status=1 and t.var_id = #{varId}
+    </select>
+    <select id="findByTreeId"  resultMap="dTreeVar_info">
+        select t.var_id,t.tree_id,t.src_var_id,t.cond_type,b.variable_name,t.var_period,t.period_unit,b.api_prod_code
+        from t_d_tree_var t
+        left join t_d_rule_var v on t.src_var_id=v.var_id
+        left join t_variable_pool b on v.var_p_id=b.variable_code
+        where t.status=1 and t.tree_id = #{treeId}
+    </select>
+    <select id="queryVarByTreeId"  resultType="java.lang.Integer">
+        select count(*)
+        from t_d_tree_var
+        where status=1 and tree_id = #{treeId}
+    </select>
+
+
+</mapper>

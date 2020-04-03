@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.ApiInputFileDetailDAO">
+    <insert id="addApiInputFileDetail"  useGeneratedKeys="true" keyProperty="apiInputFileDetail.inputFileDetailId" parameterType="com.biz.credit.vo.reportApiVO.ApiInputFileDetailVO" >
+      insert into api_input_file_detail
+      (input_file_detail_id,
+      api_code,
+      status,
+      key_no,
+      credit_code,
+      id_number,
+      cell_phone,
+      name,
+      bank_id,
+      home_addr,
+      biz_addr,
+      create_time,
+      last_update_time,
+      date,
+      month,
+      year,
+      industry_id,
+      report_type,
+      app_id,
+      industry_type,
+      api_task_id,
+      api_type)
+      values (
+      #{apiInputFileDetail.inputFileDetailId},
+      #{apiInputFileDetail.apiCode},
+      #{apiInputFileDetail.status},
+      #{apiInputFileDetail.keyNo},
+      #{apiInputFileDetail.creditCode},
+      #{apiInputFileDetail.idNumber},
+      #{apiInputFileDetail.cellPhone},
+      #{apiInputFileDetail.name},
+      #{apiInputFileDetail.bankId},
+      #{apiInputFileDetail.homeAddr},
+      #{apiInputFileDetail.bizAddr},
+      now(),
+      now(),
+      #{apiInputFileDetail.date},
+      #{apiInputFileDetail.month},
+      #{apiInputFileDetail.year},
+      #{apiInputFileDetail.industryId},
+      #{apiInputFileDetail.reportType},
+      #{apiInputFileDetail.appId},
+      #{apiInputFileDetail.industryType},
+      #{apiInputFileDetail.apiTaskId},
+      #{apiInputFileDetail.taskType})
+    </insert>
+  <insert id="addInputFileParams">
+    insert into api_input_file_detail_params (input_file_detail_id, `code`, `name`, `type`, `required`, `value`) values
+    <foreach collection="list" item="item" separator="," index="index">
+      (#{id}, #{item.code}, #{item.name}, #{item.type}, #{item.required}, #{item.value})
+    </foreach>
+  </insert>
+
+  <resultMap id="ApiInputFileDetail_list"  type="com.biz.credit.vo.reportApiVO.ApiInputFileDetailVO">
+    <result property="inputFileDetailId" column="input_file_detail_id" />
+    <result property="pdfFileName" column="pdf_file_name" />
+    <result property="pdfFilePath" column="pdf_file_path" />
+    <result property="apiCode" column="api_code" />
+    <result property="status" column="status" />
+    <result property="keyNo" column="key_no" />
+    <result property="creditCode" column="credit_code" />
+    <result property="idNumber" column="id_number" />
+    <result property="cellPhone" column="cell_phone" />
+    <result property="name" column="name" />
+    <result property="bankId" column="bank_id" />
+    <result property="homeAddr" column="home_addr" />
+    <result property="bizAddr" column="biz_addr" />
+    <result property="date" column="date" />
+    <result property="month" column="month" />
+    <result property="year" column="year" />
+    <result property="industryId" column="industry_id" />
+    <result property="reportType" column="report_type" />
+    <result property="appId" column="app_id" />
+    <result property="industryType" column="industry_type" />
+    <result property="apiTaskId" column="api_task_id" />
+  </resultMap>
+
+  <select id="queryApiInputFileDetailById" resultMap="ApiInputFileDetail_list" resultType="com.biz.credit.vo.reportApiVO.ApiInputFileDetailVO">
+    select
+    t.pdf_file_name ,
+    t.pdf_file_path,
+    t.api_task_id,
+    t.input_file_detail_id,
+    t.status,
+    t.key_no,
+    t.api_task_id
+    from api_input_file_detail t
+    <where> 1=1
+      <if test="apiInputFileDetail.inputFileDetailId != null and apiInputFileDetail.inputFileDetailId != 0 ">
+        and t.input_file_detail_id = #{apiInputFileDetail.inputFileDetailId}
+      </if>
+      <if test="apiInputFileDetail.apiTaskId != null and apiInputFileDetail.apiTaskId != ''">
+        and t.api_task_id = #{apiInputFileDetail.apiTaskId}
+      </if>
+    </where>
+    ORDER BY t.input_file_detail_id LIMIT 1
+  </select>
+  <select id="findInputFileDetail" resultType="com.biz.credit.vo.InputFileDetailVO">
+    select
+    t.pdf_file_name ,
+    t.pdf_file_path,
+    t.api_task_id,
+    t.input_file_detail_id,
+    t.status,
+    t.key_no,
+    t.api_task_id
+    from api_input_file_detail t
+    <where> 1=1
+      <if test="inputFileDetail.inputFileDetailId != null and inputFileDetail.inputFileDetailId != 0 ">
+        and t.input_file_detail_id = #{inputFileDetail.inputFileDetailId}
+      </if>
+      <if test="inputFileDetail.apiCode != null and inputFileDetail.apiCode != ''">
+        and t.api_code = #{inputFileDetail.apiCode}
+      </if>
+    </where>
+  </select>
+</mapper>

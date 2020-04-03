@@ -1,0 +1,14 @@
+server:
+  port: 8761
+
+spring:
+  application:
+    name: center-service
+
+eureka:
+  client:
+    #registerWithEureka: true
+    #fetchRegistry: true
+    serviceUrl:
+      #如果启动center1，此处配置为http://center2:8761/eureka/   center2=192.168.23.97
+      defaultZone: http://center2:8761/eureka/

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.DNodeApiDAO">
+    <insert id="insertList" useGeneratedKeys="true" keyProperty="ruleId"   parameterType="java.util.List">
+        INSERT INTO t_d_node_api
+        (api_prod_code,
+        api_version,
+        node_id,
+        status,
+        update_time,
+        create_time)
+        VALUES
+        <foreach collection ="nodeApiList" item="nodeApi" index="index" separator=",">
+            (#{nodeApi.apiProdCode},#{nodeApi.apiVersion},#{nodeApi.nodeId},#{nodeApi.status},now(),now())
+        </foreach>
+    </insert>
+
+    <update id="updateStatusByNodeId">
+        update t_d_node_api set status = #{status}
+        where node_id = #{nodeId}
+    </update>
+
+    <select id="queryList" parameterType="com.biz.credit.vo.DNodeApiVO" resultType="com.biz.credit.vo.DNodeApiVO">
+        select a.prod_code as apiProdCode,
+               a.prod_name,
+               a.version as apiVersion,
+               case when na.id is null then false else true end as choose
+          from api_admin.api a left join t_d_node_api na
+            on na.api_prod_code = a.prod_code and na.api_version = a.version and na.node_id = #{dNodeApiVO.nodeId} and na.status = 1
+         inner join api_admin.api_source s on a.source_id = s.source_id and ( s.api_code is null or s.api_code = #{dNodeApiVO.apiCode})
+         where biz_type in (1, 2) and is_deleted=0
+           and exists (select 1 from t_project_api where api_code = #{dNodeApiVO.apiCode} and prod_code = a.prod_code and version = a.version and status = 1)
+        <if test="dNodeApiVO.prodName != null and dNodeApiVO.prodName != ''">
+           and a.prod_name like concat('%',#{dNodeApiVO.prodName},'%')
+        </if>
+        <if test="dNodeApiVO.apiProdCode != null and dNodeApiVO.apiProdCode != ''">
+           and a.prod_code like concat('%',#{dNodeApiVO.apiProdCode},'%')
+        </if>
+        <if test="dNodeApiVO.sourceId != null">
+           and a.source_id = #{dNodeApiVO.sourceId}
+        </if>
+         order by choose desc, apiProdCode asc
+    </select>
+
+</mapper>

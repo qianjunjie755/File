@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.DNodeRuleDAO">
+
+   <select id="queryNodeRuleList" parameterType="com.biz.credit.vo.DNodeRuleVO" resultType="com.biz.credit.vo.DNodeRuleVO">
+       select t.rule_id,r.rule_name,r.rule_code,r.rule_version,r.rule_desc,r.rule_type,r.calc_logic,r.api_prod_code,r.api_version,
+       r.rule_id as src_rule_id,
+       case when t.rule_id is null then false else true end choose,
+       case when t.rule_id is null then false else true end instance,
+       case when t.rule_id is null then r.rule_weight else t.rule_weight end rule_weight
+       from t_d_rule r left join (select rule_id,nr.src_rule_id,rule_weight from t_d_node_rule nr
+       inner join t_d_node_model nm on nr.model_id = nm.model_id and nm.status = 1
+       and nm.model_type = #{nodeRuleVO.modelType} and nm.node_id = #{nodeRuleVO.nodeId} where nr.status = 1) t on t.src_rule_id = r.rule_id
+       where r.status = 1
+       and exists (select 1 from t_project_api where api_code = #{nodeRuleVO.apiCode} and prod_code = r.api_prod_code and version = r.api_version and status = 1)
+       <if test="nodeRuleVO.ruleName != null and nodeRuleVO.ruleName != ''">
+        and r.rule_name like concat('%',#{nodeRuleVO.ruleName},'%')
+       </if>
+       <if test="nodeRuleVO.apiProdCode != null and nodeRuleVO.apiProdCode != ''">
+          and r.api_prod_code like concat('%',#{nodeRuleVO.apiProdCode},'%')
+       </if>
+       <if test="nodeRuleVO.ruleType != null">
+          and r.rule_type = #{nodeRuleVO.ruleType}
+       </if>
+       order by choose desc, r.rule_id
+   </select>
+
+    <select id="queryNodeRuleById" resultType="com.biz.credit.vo.DNodeRuleVO">
+        select nr.rule_id,nr.src_rule_id,nr.rule_weight,nr.calc_logic,nr.model_id,nr.status,
+        r.rule_name,r.rule_desc,r.rule_version,r.rule_code,1 as instance
+        from t_d_node_rule nr
+        left join t_d_rule r on nr.src_rule_id = r.rule_id
+        where nr.status = 1
+        and nr.rule_id = #{nodeRuleId}
+    </select>
+
+    <update id="updateStatusByModelId">
+        update t_d_node_rule set status = #{status}
+        where model_id = #{modelId}
+    </update>
+
+    <select id="queryListByModelId" resultType="com.biz.credit.vo.DNodeRuleVO">
+        select nr.rule_id,nr.src_rule_id,nr.rule_weight,nr.calc_logic,nr.model_id,nr.status,
+        r.rule_name,r.rule_desc,r.rule_version,r.rule_code
+        from t_d_node_rule nr left join t_d_rule r on r.rule_id = nr.src_rule_id
+         where model_id = #{modelId} and nr.status = 1
+    </select>
+
+    <insert id="insertDNodeRule" useGeneratedKeys="true" keyProperty="nodeRule.ruleId" parameterType="com.biz.credit.vo.DNodeRuleVO">
+        insert into t_d_node_rule(src_rule_id, rule_weight, calc_logic, model_id, status,
+         update_time, create_time) values
+         (#{nodeRule.srcRuleId},#{nodeRule.ruleWeight},#{nodeRule.calcLogic},#{nodeRule.modelId},#{nodeRule.status},now(),now())
+    </insert>
+</mapper>

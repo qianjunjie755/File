@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.ModuleTypeDAO">
+    <insert id="addModuleTypeByTemplate" useGeneratedKeys="true" keyProperty="moduleType.moduleTypeId" parameterType="com.biz.credit.domain.ModuleType" >
+        insert into module_type ( module_type_name,prod_code,prod_name,last_update_time, create_time, html_template_name, description, report_type, excel_template_name, column_head, is_template,column_head_person,radar_model_id)
+        select module_type_name,prod_code,prod_name,now(),now(),html_template_name,description,report_type,excel_template_name,column_head,0,column_head_person,radar_model_id from module_type
+        where report_type=#{moduleType.reportType} and is_template=1
+    </insert>
+    <insert id="addModuleType"  useGeneratedKeys="true" keyProperty="moduleType.moduleTypeId" parameterType="com.biz.credit.vo.ModuleTypeVO">
+        insert into module_type ( module_type_name, last_update_time, create_time, html_template_name, description, report_type, excel_template_name, column_head, is_template,strategy_id,column_head_person,radar_model_id,prod_code,prod_name,flow_id)
+        values(#{moduleType.moduleTypeName},now(),now(),#{moduleType.htmlTemplateName},#{moduleType.description},#{moduleType.reportType},#{moduleType.excelTemplateName},#{moduleType.columnHead},#{moduleType.isTemplate},#{moduleType.strategyId},#{moduleType.columnHeadPerson},#{moduleType.radarModelId},#{moduleType.prodCode},#{moduleType.prodName},#{moduleType.flowId})
+    </insert>
+    <insert id="addModuleTypeByStrategyId" useGeneratedKeys="true" keyProperty="moduleType.moduleTypeId" parameterType="com.biz.credit.vo.ModuleTypeVO">
+        insert into module_type( module_type_name, last_update_time, create_time, html_template_name, description, report_type, excel_template_name, prod_code, prod_name, column_head, is_template, strategy_id,column_head_person,radar_model_id)
+        select module_type_name, now(), now(), html_template_name, concat(module_type_name,#{moduleType.apiCode}), report_type, excel_template_name, prod_code, prod_name, column_head, is_template, #{moduleType.newStrategyId},column_head_person,radar_model_id from module_type
+        where strategy_id=#{moduleType.strategyId}
+    </insert>
+
+    <update id="updateModuleType">
+      update module_type t
+      set
+        t.module_type_name = #{moduleType.moduleTypeName},
+        t.parent_id = #{moduleType.parentId},
+        t.is_last = #{moduleType.isLast},
+        t.selected = #{moduleType.selected},
+        t.task_id = #{moduleType.taskId},
+        t.last_update_time = #{moduleType.lastUpdateTime}
+        where t.module_type_id = #{moduleType.moduleTypeId}
+    </update>
+    <update id="updateColumnHead">
+        update module_type set last_update_time=now(),column_head=#{moduleTypeVO.columnHead},column_head_person=#{moduleTypeVO.columnHeadPerson}
+        where module_type_id=#{moduleTypeVO.moduleTypeId}
+    </update>
+
+    <resultMap id="moduleType_list"  type="com.biz.credit.vo.ModuleTypeVO">
+        <result property="moduleTypeId" column="module_type_id" />
+        <result property="moduleTypeName" column="module_type_name" />
+        <result property="htmlTemplateName" column="html_template_name" />
+        <result property="description" column="description" />
+        <result property="excelTemplateName" column="excel_template_name" />
+        <result property="reportType" column="report_type" />
+        <result property="columnHead" column="column_head" />
+        <result property="columnHeadPerson" column="column_head_person"/>
+        <result property="lastUpdateTime" column="last_update_time" />
+        <result property="createTime" column="create_time" />
+        <result property="status" column="status" />
+        <result property="flowId" column="flow_id" />
+        <result property="strategyId" column="strategy_id" />
+        <result property="radarModelId" column="radar_model_id" />
+        <result property="prodCode" column="prod_code" />
+        <result property="prodName" column="prod_name" />
+    </resultMap>
+    <select id="findModuleTypeList"  resultMap="moduleType_list"  resultType="com.biz.credit.vo.ModuleTypeVO">
+      select
+        t.module_type_id,
+        t.module_type_name,
+        t.html_template_name,
+        t.description,
+        t.excel_template_name,
+        t.report_type,
+        t.column_head,
+        t.column_head_person,
+        t.flow_id,
+        t.strategy_id,
+        t1.status,t.radar_model_id,
+        date_format(t.last_update_time,'%Y-%m-%d %T') last_update_time,
+        date_format(t.create_time,'%Y-%m-%d %T') create_time,t.prod_code,t.prod_name
+      from module_type t
+        inner join module_type_api t1 on t1.module_type_id=t.module_type_id
+        <if test="moduleType.industryId != null and moduleType.industryId != 0 and moduleType.industryId != -2">
+            inner join industry_info_api t2 on t2.api_code=t1.api_code and t1.module_type_id=t2.module_type_id
+        </if>
+        <where>
+            t1.api_code=#{moduleType.apiCode} and t1.status=1
+            <if test="moduleType.industryId != null and moduleType.industryId != 0 and moduleType.industryId != -2">
+                and t2.industry_id = #{moduleType.industryId}
+            </if>
+            <choose>
+                <when test="moduleType.industryId != null and moduleType.industryId != 0 and moduleType.industryId != -2">
+                    and t.flow_id is null
+                </when>
+                <otherwise>
+                    and t.flow_id is not null
+                </otherwise>
+            </choose>
+        </where>
+    </select>
+
+    <select id="findModuleTypeById" resultType="com.biz.credit.vo.ModuleTypeVO" parameterType="com.biz.credit.vo.ModuleTypeVO">
+        select
+        t.module_type_id moduleTypeId,
+        t.module_type_name moduleTypeName,
+        t.html_template_name htmlTemplateName,
+         t.excel_template_name excelTemplateName,
+        t.report_type reportType,
+        t.column_head columnHead,
+        t.flow_id flowId,
+        t.description,t.strategy_id strategyId,t.column_head_person columnHeadPerson,t.radar_model_id radarModelId,t.prod_code prodCode,t.prod_name prodName
+        from module_type t
+        where t.module_type_id=#{moduleType.moduleTypeId}
+    </select>
+    <select id="findModuleTypeTemplateByReportType" resultType="com.biz.credit.vo.ModuleTypeVO">
+        select
+            t.module_type_id moduleTypeId,
+            t.module_type_name moduleTypeName,
+            t.html_template_name htmlTemplateName,
+            t.excel_template_name excelTemplateName,
+            t.report_type reportType,
+            t.column_head columnHead,
+            t.description,
+            t.flow_id flowId,
+            t.column_head_person,t.radar_model_id
+        from module_type t
+        where t.is_template=#{moduleType.isTemplate}
+        <if test="null != moduleType.reportType">
+            and t.report_type = #{moduleType.reportType}
+        </if>
+        <if test="null != moduleType.strategyId">
+            and t.strategy_id=#{moduleType.strategyId}
+        </if>
+
+    </select>
+    <select id="findModuleTypeTemplateByStrategyId" resultType="com.biz.credit.vo.ModuleTypeVO">
+        select
+            t.module_type_id moduleTypeId,
+            t.module_type_name moduleTypeName,
+            t.html_template_name htmlTemplateName,
+            t.excel_template_name excelTemplateName,
+            t.report_type reportType,
+            t.prod_code,
+            t.prod_name,
+            t.column_head columnHead,
+            t.strategy_id strategyId,
+            t.flow_id flowId,
+            t.description,
+            t.column_head_person,
+            t.radar_model_id
+        from module_type t
+        where t.strategy_id=#{strategyId}
+    </select>
+    <select id="findModuleTypeInfoById" resultType="com.biz.credit.vo.ModuleTypeVO" parameterType="com.biz.credit.vo.ModuleTypeVO">
+        SELECT
+        a.module_type_id moduleTypeId,
+        a.report_type reportType,
+        b.api_code apiCode,
+        c.industry_id industryId,
+        a.strategy_id strategyId,
+        a.flow_id flowId,a.prod_code prodCode,a.prod_name prodName
+        FROM module_type  a
+        INNER JOIN module_type_api b
+        ON a.module_type_id = b.module_type_id
+        left JOIN industry_info_api c
+        ON a.module_type_id = c.module_type_id
+        <where> 1=1
+            <if test="moduleType.moduleTypeId != null and moduleType.moduleTypeId != ''">
+                and b.module_type_id = #{moduleType.moduleTypeId}
+            </if>
+            <if test="moduleType.apiCode != null and  moduleType.apiCode!= ''">
+                and b.api_code = #{moduleType.apiCode}
+            </if>
+        </where>
+    </select>
+    <select id="findModuleTypeTemplateByFlowId" resultType="com.biz.credit.vo.ModuleTypeVO">
+        select module_type_id, module_type_name, html_template_name, description, report_type, excel_template_name, prod_code, prod_name, column_head, is_template, strategy_id, flow_id, column_head_person, radar_model_id, last_update_time, create_time
+        from module_type
+        where flow_id=#{flowId} limit 1
+    </select>
+    <select id="findModuleTypeByFlowId" resultType="com.biz.credit.vo.ModuleTypeVO">
+        select
+            t.module_type_id moduleTypeId,
+            t.module_type_name moduleTypeName,
+            t.html_template_name htmlTemplateName,
+            t.excel_template_name excelTemplateName,
+            t.report_type reportType,
+            t.column_head columnHead,
+            t.flow_id flowId,
+            t.description,t.strategy_id strategyId,t.column_head_person columnHeadPerson,t.radar_model_id radarModelId,t.prod_code prodCode,t.prod_name prodName
+        from module_type t
+        where t.flow_id=#{flowId} limit 1
+    </select>
+
+</mapper>

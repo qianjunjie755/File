@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.InputFileDetailContactDAO">
+    <insert id="addContact"  useGeneratedKeys="true" keyProperty="inputFileDetailContact.contactId"
+            parameterType="com.biz.credit.domain.InputFileDetailContact" >
+      insert into input_file_detail_contact
+          (
+          input_file_detail_id,
+          id_number,
+          cell_phone,
+          name,
+          home_addr,
+          biz_addr,
+          last_update_time,
+          create_time)
+     values
+        (
+        #{inputFileDetailContact.inputFileDetailId},
+        #{inputFileDetailContact.idNumber},
+        #{inputFileDetailContact.cellPhone},
+        #{inputFileDetailContact.name},
+        #{inputFileDetailContact.homeAddr},
+        #{inputFileDetailContact.bizAddr},
+        now(),
+        now())
+    </insert>
+    <insert id="addContacts" useGeneratedKeys="true"  parameterType="java.util.List"  keyProperty="contactId">
+        insert into input_file_detail_contact (
+        input_file_detail_id,
+        id_number,
+        cell_phone,
+        name,
+        home_addr,
+        biz_addr,
+        last_update_time,
+        create_time)
+        values
+        <foreach collection="list"  item="item" separator="," index="index">
+            (
+            #{item.inputFileDetailId},
+            #{item.idNumber},
+            #{item.cellPhone},
+            #{item.name},
+            #{item.homeAddr},
+            #{item.bizAddr},
+            now(),
+            now())
+        </foreach>
+    </insert>
+    <insert id="insertContactParams">
+        insert into input_file_detail_contact_params (input_file_detail_contact_id, `code`, `name`, `type`, `required`, `value`) values
+        <foreach collection="list" item="item" separator="," index="index">
+            (#{id}, #{item.code}, #{item.name}, #{item.type}, #{item.required}, #{item.value})
+        </foreach>
+    </insert>
+    <select id="findInputFileDetailContactList" resultType="com.biz.credit.domain.InputFileDetailContact">
+        select contact_id, input_file_detail_id, name, id_number, cell_phone, home_addr, biz_addr, create_time, last_update_time
+        from input_file_detail_contact
+        where input_file_detail_id=#{inputFileDetailId}
+    </select>
+    <select id="findInputFileDetailContactVOList" resultType="com.biz.credit.vo.InputFileDetailContactVO">
+        select contact_id, input_file_detail_id, name relatedPerson, id_number relatedIdNumber, cell_phone relatedCellPhone, home_addr relatedHomeAddress, biz_addr relatedBizAddress, create_time, last_update_time
+        from input_file_detail_contact
+        where input_file_detail_id=#{inputFileDetailId}
+    </select>
+</mapper>

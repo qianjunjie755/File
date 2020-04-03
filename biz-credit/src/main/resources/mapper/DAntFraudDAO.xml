@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.DAntiFraudDAO">
+
+    <select id="queryList" parameterType="com.biz.credit.vo.DAntiFraudVO" resultType="com.biz.credit.vo.DAntiFraudVO">
+      select id,name,version,api_prod_code,api_version,api_json,af.status,
+      case when nm.model_id is null then false else true end as choose
+      from t_d_anti_fraud af
+      left join t_d_node_model nm on nm.model_code = af.id and nm.node_id = #{antiFraud.nodeId}
+      and model_type = #{antiFraud.modelType} and nm.status = 1
+      where af.status = 1 and exists (select 1 FROM t_project_api WHERE api_code = #{antiFraud.apiCode} AND prod_code = af.api_prod_code AND version = af.api_version AND status = 1)
+    </select>
+
+    <resultMap id="nodeParams_list" type="com.biz.credit.domain.DNodeParam">
+        <result column="param_cfg_code" property="code"/>
+        <result column="GROUP_CONCAT(t.param_code)" property="fields"/>
+        <result column="param_name" property="name"/>
+        <result column="MAX(t.required)" property="required"/>
+    </resultMap>
+    <select id="queryParamsAntiFraud" resultMap="nodeParams_list">
+        SELECT t.param_cfg_code, t.param_name,GROUP_CONCAT(t.param_code), MAX(t.required) FROM (
+        SELECT DISTINCT n.param_code, c.param_cfg_code, d.param_name, d.param_type, d.param_order, n.required FROM (
+        select api_prod_code,api_version
+        from t_d_anti_fraud
+        where id=#{id}
+        GROUP BY api_prod_code,api_version) m
+        INNER JOIN (SELECT a.prod_code, a.version, b.param_code, b.param_name, b.required FROM api_admin.api a
+        INNER JOIN api_admin.api_request b ON a.id = b.api_id) n ON m.api_prod_code = n.prod_code AND m.api_version = n.version
+        INNER JOIN api_admin.api_request_map c ON n.param_code = c.param_code
+        INNER JOIN api_admin.api_param_cfg d ON c.param_cfg_code = d.param_code) t
+        GROUP BY param_cfg_code, param_name, param_type, param_order ORDER BY param_type, param_order;
+    </select>
+</mapper>

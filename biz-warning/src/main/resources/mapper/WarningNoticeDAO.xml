@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.warning.dao.WarningNoticeDAO">
+    <insert id="addWarningNotice" parameterType="com.biz.warning.vo.WarningNoticeVO">
+        insert into risk_warning.t_warn_result_variable_check (warn_result_variable_id, user_id, api_code) values (#{wck.warnResultVariableId},#{wck.userId},#{wck.apiCode})
+    </insert>
+    <insert id="addWarningNoticeUnRead" parameterType="com.biz.warning.vo.WarningNoticeVO">
+        insert into risk_warning.t_warn_result_variable_unread (warn_result_variable_id, user_id, api_code) values (#{wck.warnResultVariableId},#{wck.userId},#{wck.apiCode})
+    </insert>
+    <update id="updateWarningNotice" parameterType="com.biz.warning.vo.WarningNoticeVO">
+        update risk_warning.t_warn_result_variable_check set update_time=now(),`count`=`count`+1 where warn_result_variable_id=#{wck.warnResultVariableId} and user_id=#{wck.userId} and api_code=#{wck.apiCode}
+    </update>
+    <delete id="deleteWaringNotceUnread" parameterType="com.biz.warning.vo.WarningNoticeVO">
+        delete from risk_warning.t_warn_result_variable_unread where api_code=#{wck.apiCode} and user_id=#{wck.userId} and warn_result_variable_id=#{wck.warnResultVariableId}
+    </delete>
+    <select id="findWarningNoticeCount" resultType="java.lang.Integer">
+        select count(1) from risk_warning.t_warn_result_variable_check where warn_result_variable_id=#{wck.warnResultVariableId} and user_id=#{wck.userId} and api_code=#{wck.apiCode}
+    </select>
+
+
+    <select id="findList" resultType="com.biz.warning.vo.WarningNoticeVO">
+        select x.warn_result_variable_id,x.hit_time,x.detail_existed,x.api_code,x.user_id,x.company_name,x.data_source,case when x.`read`>0 then 1 else 0 end `read` from (
+        select a. warn_result_variable_id,date_format(a.hit_time,'%Y-%m-%d') hit_time,a.detail_existed,b.api_code,b.user_id,b.company_name,e.source_name data_source,(select count(1) from risk_warning.t_warn_result_variable_check c where c.user_id=#{wck.userId} and c.warn_result_variable_id=a.warn_result_variable_id and c.api_code=#{wck.apiCode}) `read` from risk_warning.t_warn_result_variable a
+        inner join risk_warning.t_entity b on a.entity_id=b.entity_id
+        inner join risk_warning.t_variable_pool d
+        on a.variable_code=d.variable_code
+        inner join risk_warning.t_variable_source e
+        on d.source_id=e.source_id
+        where b.api_code = #{wck.apiCode}
+        <if test="wck.userIds != null and wck.userIds.size > 0">
+            and b.user_id in
+            <foreach collection="wck.userIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+         order by a.warn_result_variable_id desc) x
+    </select>
+    <select id="findWarnVariableResultList" resultType="com.biz.warning.vo.WarningNoticeVO">
+        select a. warn_result_variable_id,date_format(a.hit_time,'%Y-%m-%d') hit_time,a.detail_existed,b.api_code,b.user_id,b.company_name,e.source_name data_source,d.variable_name
+        from risk_warning.t_warn_result_variable a
+        inner join risk_warning.t_entity b
+        on a.entity_id=b.entity_id
+        inner join risk_warning.t_variable_pool d
+        on a.variable_code=d.variable_code
+        inner join risk_warning.t_variable_source e
+        on d.source_id=e.source_id
+        where b.api_code = #{wck.apiCode}
+        <if test="wck.userIds != null and wck.userIds.size > 0">
+            and b.user_id in
+            <foreach collection="wck.userIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by a.warn_result_variable_id desc
+    </select>
+    <select id="findWarnVariableResultListUnRead" resultType="com.biz.warning.vo.WarningNoticeVO">
+        select a. warn_result_variable_id from risk_warning.t_warn_result_variable_unread a
+        where a.user_id=#{wck.userId} and a.api_code=#{wck.apiCode} order by warn_result_variable_id desc
+    </select>
+    <select id="findWarnVariableResultListRead" resultType="com.biz.warning.vo.WarningNoticeVO">
+        select a. warn_result_variable_id from risk_warning.t_warn_result_variable_check a
+        where a.user_id=#{wck.userId} and a.api_code=#{wck.apiCode} order by warn_result_variable_id desc
+    </select>
+    <select id="findSingleWarningNotice" resultType="com.biz.warning.vo.WarningNoticeVO">
+        select a. warn_result_variable_id,date_format(a.hit_time,'%Y-%m-%d') hit_time,a.detail_existed,b.api_code,b.user_id,b.company_name,e.source_name data_source,d.variable_name from risk_warning.t_warn_result_variable a
+        inner join risk_warning.t_entity b on a.entity_id=b.entity_id
+        inner join risk_warning.t_variable_pool d
+        on a.variable_code=d.variable_code
+        inner join risk_warning.t_variable_source e
+        on d.source_id=e.source_id
+        where b.api_code = #{wck.apiCode}
+        <if test="wck.userIds != null and wck.userIds.size > 0">
+            and b.user_id in
+            <foreach collection="wck.userIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by a.warn_result_variable_id desc limit 1
+    </select>
+    <select id="findSingleWarningNoticeUnRead" resultType="com.biz.warning.vo.WarningNoticeVO">
+        select a.warn_result_variable_id,a.user_id,a.api_code from risk_warning.t_warn_result_variable_unread a
+        where a.user_id = #{wck.userId}
+        and a.api_code=#{wck.apiCode} order by a.warn_result_variable_id desc limit 1
+    </select>
+    <select id="findListByWarnResultVariableIdList" resultType="com.biz.warning.vo.WarningNoticeVO">
+        select a.warn_result_variable_id,date_format(a.hit_time,'%Y-%m-%d') hit_time,b.api_code,b.user_id,b.company_name,e.source_name data_source,a.detail_existed,d.variable_name from risk_warning.t_warn_result_variable a
+            inner join risk_warning.t_entity b on a.entity_id=b.entity_id
+            inner join risk_warning.t_variable_pool d
+                on a.variable_code=d.variable_code
+            inner join risk_warning.t_variable_source e
+                on d.source_id=e.source_id
+        where a.warn_result_variable_id in
+        <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+         order by a.warn_result_variable_id asc
+    </select>
+    <select id="findUnReadWarningNoticeCount" resultType="java.lang.Long">
+        select count(1) from risk_warning.t_warn_result_variable_unread a
+        where a.user_id =#{wck.userId}
+        and a.api_code=#{wck.apiCode}
+        <if test="null != wck.warnResultVariableId">
+            and a.warn_result_variable_id=#{wck.warnResultVariableId}
+        </if>
+    </select>
+    <select id="findListFromStartToEnd" resultType="com.biz.warning.vo.WarningNoticeVO">
+        select a.warn_result_variable_id,b.api_code,b.user_id from risk_warning.t_warn_result_variable a inner join risk_warning.t_entity b on b.entity_id=a.entity_id
+        where a.warn_result_variable_id &gt;#{start} and a.warn_result_variable_id &lt;=#{end} order by a.warn_result_variable_id asc
+    </select>
+    <select id="findWarnVariableResultById" resultType="com.biz.warning.vo.WarningNoticeVO">
+        select a.warn_result_variable_id,date_format(a.hit_time,'%Y-%m-%d') hit_time,b.api_code,b.user_id,b.company_name,e.source_name data_source,a.detail_existed,d.variable_name from risk_warning.t_warn_result_variable a
+        inner join risk_warning.t_entity b on a.entity_id=b.entity_id
+        inner join risk_warning.t_variable_pool d
+        on a.variable_code=d.variable_code
+        inner join risk_warning.t_variable_source e
+        on d.source_id=e.source_id
+        where a.warn_result_variable_id = #{wck.warnResultVariableId}
+    </select>
+
+
+</mapper>

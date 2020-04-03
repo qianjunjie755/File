@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.warning.dao.VariableDAO">
+    <resultMap id="variable_map" type="com.biz.warning.vo.VariableVO">
+        <result property="variableId" column="variable_id" />
+        <result property="variableCode" column="variable_code" />
+        <result property="userId" column="user_id" />
+        <result property="apiCode" column="api_code" />
+        <result property="isTemplate" column="is_template" />
+        <result property="ruleId" column="rule_id" />
+        <result property="variableTypeCode" column="variable_type_code" />
+        <result property="threshold" column="threshold" />
+        <result property="frequencyCode" column="frequency_code" />
+        <result property="period" column="period" />
+        <result property="periodUnit" column="period_unit" />
+        <result property="apiProdCode" column="api_prod_code" />
+        <result property="apiVersion" column="api_version" />
+        <result property="description" column="description" />
+        <result property="lastUpdateTime" column="last_update_time" />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+
+    <resultMap id="variable_pool_map" type="com.biz.warning.domain.VariablePool">
+        <result property="variableCode" column="variable_code" />
+        <result property="variableName" column="variable_name" />
+        <result property="variableTypeCode" column="variable_type_code" />
+        <result property="version" column="version" />
+        <result property="dataType" column="data_type" />
+        <result property="defaultThreshold" column="default_threshold" />
+        <result property="dataSource" column="data_source" />
+        <result property="userId" column="user_id" />
+        <result property="apiProdCode" column="api_prod_code" />
+        <result property="apiVersion" column="api_version" />
+        <result property="description" column="description" />
+        <result property="lastUpdateTime" column="last_update_time" />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+
+    <select id="findVariable" resultMap="variable_map" parameterType="com.biz.warning.vo.VariableVO">
+        select
+        t.variable_id,t.variable_code, t.rule_id ,t.user_id,t.api_code, t.is_template, t.variable_type_code ,t.period_unit,
+        t.variable_id,t.threshold,t.frequency_code,t.period,t.api_prod_code,t.api_version ,a.description,a.variable_name
+        from risk_warning.t_variable t
+        inner join risk_warning.t_variable_pool a on a.variable_code=t.variable_code
+        where t.rule_id = #{variable.ruleId}
+    </select>
+
+    <select id="findVariableByRule" resultMap="variable_map" parameterType="com.biz.warning.vo.RuleVO">
+        SELECT
+        t.variable_id, t.variable_code,t.user_id,t.api_code, t.is_template,t.rule_id,t.variable_type_code,t.period_unit,
+        t.threshold,t.frequency_code,t.period,t.api_prod_code,t.api_version
+        FROM risk_warning.t_variable t
+        WHERE t.rule_id = #{rule.ruleId}
+    </select>
+
+    <insert id="addVariable" useGeneratedKeys="true" keyProperty="variable.variableId"   parameterType="com.biz.warning.vo.VariableVO">
+        INSERT INTO t_variable
+        (variable_code,
+        user_id,
+        api_code,
+        is_template,
+        rule_id,
+        variable_type_code,
+        threshold,
+        frequency_code,
+        period,
+        period_unit,
+        api_prod_code,
+        api_version,
+        description,
+        last_update_time,
+        create_time)
+        VALUES
+        (#{variable.variableCode},#{variable.userId},#{variable.apiCode},#{variable.isTemplate},#{variable.ruleId},#{variable.variableTypeCode},
+        #{variable.threshold},#{variable.frequencyCode},#{variable.period},#{variable.periodUnit},#{variable.apiProdCode},#{variable.apiVersion},#{variable.description},now(),now())
+
+    </insert>
+
+    <insert id="addVariableList" useGeneratedKeys="true" keyProperty="variableId"   parameterType="java.util.List">
+        INSERT INTO risk_warning.t_variable
+        (variable_code,
+        user_id,
+        api_code,
+        is_template,
+        rule_id,
+        variable_type_code,
+        threshold,
+        frequency_code,
+        period,
+        period_unit,
+        api_prod_code,
+        api_version,
+        description,
+        last_update_time,
+        create_time)
+        VALUES
+        <foreach collection ="list" item="item" index="index" separator=",">
+        (#{item.variableCode},#{item.userId},#{item.apiCode},#{item.isTemplate},#{item.ruleId},#{item.variableTypeCode},
+        #{item.threshold},#{item.frequencyCode},#{item.period},#{item.periodUnit},#{item.apiProdCode},#{item.apiVersion},#{item.description},now(),now())
+        </foreach>
+    </insert>
+
+    <update id="updateVariable" parameterType="com.biz.warning.vo.VariableVO">
+        UPDATE t_variable
+        SET
+        is_template = #{variable.isTemplate},
+        user_id = #{variable.userId},
+        description = #{variable.description},
+        last_update_time = now()
+        WHERE variable_id = #{variable.variableId}
+    </update>
+
+    <update id="updateVariableValue" parameterType="com.biz.warning.vo.VariableVO">
+        UPDATE risk_warning.t_variable
+        SET
+        threshold = #{variable.threshold},
+        frequency_code = #{variable.frequencyCode},
+        last_update_time = now()
+        WHERE variable_id = #{variable.variableId}
+    </update>
+    <update id="updateVariableThresholdForTaskUpdate">
+        UPDATE risk_warning.t_variable
+        SET
+            threshold = #{variable.threshold},
+            last_update_time = now()
+        WHERE variable_id = #{variable.variableId}
+    </update>
+
+
+    <delete id="deleteVariable" parameterType="com.biz.warning.vo.VariableVO" >
+        DELETE FROM t_variable
+        WHERE
+        variable_id = #{variable.variableId}
+    </delete>
+
+    <delete id="deleteVariableByRuleId" parameterType="com.biz.warning.vo.RuleVO" >
+        DELETE FROM t_variable
+        WHERE
+        rule_id = #{rule.ruleId}
+    </delete>
+
+
+    <select id="findSingleVariable" resultMap="variable_map" parameterType="com.biz.warning.vo.VariableVO">
+      SELECT
+        t.variable_id,t.variable_name ,t.is_template, t.variable_type_id ,t.version, t.default_threshold ,t.data_type,
+        t.data_source, t.user_id,t.description, date_format(t.last_update_time,'%Y-%m-%d %T') last_update_time,
+        date_format(t.create_time,'%Y-%m-%d %T') create_time
+      FROM t_variable t
+      WHERE
+        t.variable_id = #{variable.variableId}
+
+      <!--<choose>
+          <when test="null != user.id and 0 &lt; api.id">
+              and t.id = #{api.id}
+          </when>
+          <when test="null != api.apiName and ''!= api.apiName">
+              and t.api_name = #{api.apiName}
+          </when>
+          <when test="null != api.apiNo and '' != api.apiNo">
+              and t.api_no = #{api.apiNo}
+          </when>
+      </choose>-->
+    </select>
+
+    <select id="findVariableByType" resultMap="variable_pool_map">
+        SELECT
+        t.variable_code,t.variable_name,t.version, t.variable_type_code
+        FROM t_variable_pool t
+        WHERE t.variable_type_code = #{variableTypeCode}
+    </select>
+
+    <select id="findVersionByVariableName" resultMap="variable_pool_map">
+        SELECT
+        DISTINCT t.variable_code, t.version
+        FROM t_variable_pool t
+        WHERE t.variable_name = #{variableName}
+    </select>
+
+    <select id="findThresholdByVariableCode" resultType="String">
+        SELECT
+        default_threshold
+        FROM t_variable_pool t
+        WHERE t.variable_code = #{variableCode}
+    </select>
+
+
+
+</mapper>

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.ApiDAO">
+    <insert id="addApi" useGeneratedKeys="true" keyProperty="apiVO.id" parameterType="com.biz.credit.vo.ApiVO">
+        insert into api_admin.api (prod_code, prod_name,introduction, data_description, description, reqParams, respParams)
+        values (#{apiVO.prodCode},#{apiVO.prodName},#{apiVO.introduction},#{apiVO.dataDescription},#{apiVO.description},#{apiVO.reqParams},#{apiVO.respParams})
+    </insert>
+    <insert id="addApiRequest"  useGeneratedKeys="true" keyProperty="apiRequestVO.id" parameterType="com.biz.credit.vo.ApiRequestVO">
+        insert into api_admin.api_request (api_id, param_code, param_type, param_name, param_desc,required)
+        values (#{apiRequestVO.apiId},#{apiRequestVO.paramCode},#{apiRequestVO.paramType},#{apiRequestVO.paramName},#{apiRequestVO.paramDesc},#{apiRequestVO.required})
+    </insert>
+    <insert id="addApiResponseVO" useGeneratedKeys="true" keyProperty="apiResponseVO.id" parameterType="com.biz.credit.vo.ApiResponseVO">
+        insert into api_admin.api_response (api_id, param_code, param_type, length, param_name, param_desc, parent_id)
+        values (#{apiResponseVO.apiId},#{apiResponseVO.paramCode},#{apiResponseVO.paramType},#{apiResponseVO.length},#{apiResponseVO.paramName},#{apiResponseVO.paramDesc},#{apiResponseVO.parentId})
+    </insert>
+    <update id="updateApi" parameterType="com.biz.credit.vo.ApiVO">
+        update api_admin.api set update_t=now(),
+            description=#{apiVO.description},
+            data_description=#{apiVO.dataDescription},
+            introduction=#{apiVO.introduction}
+        where prod_code=#{apiVO.prodCode} and version=#{apiVO.version}
+    </update>
+    <update id="updateApiRequest" parameterType="com.biz.credit.vo.ApiRequestVO">
+        update api_admin.api_request t,(select aa.id,aa.prod_code,aa.version from api_admin.api aa ) a  set t.update_time=now(),
+            t.param_type=#{apiRequestVO.paramType},
+            t.required=#{apiRequestVO.required},
+            t.param_name=#{apiRequestVO.paramName},
+            t.param_desc=#{apiRequestVO.paramDesc},
+            t.status=#{apiRequestVO.status}
+        where a.id=t.api_id and a.prod_code=#{apiRequestVO.apiProdCode} and a.version=#{apiRequestVO.apiVersion} and t.param_code=#{apiRequestVO.paramCode}
+    </update>
+    <update id="updateApiResponseVO" parameterType="com.biz.credit.vo.ApiResponseVO">
+        update api_admin.api_response t,(select aa.id,aa.prod_code,aa.version from api_admin.api aa ) a  set t.update_time=now(),
+            t.param_type=#{apiResponseVO.paramType},
+            t.length=#{apiResponseVO.length},
+            t.param_name=#{apiResponseVO.paramName},
+            t.param_desc=#{apiResponseVO.paramDesc},
+            t.status=#{apiResponseVO.status}
+        where a.id=t.api_id and a.prod_code=#{apiResponseVO.apiProdCode} and a.version=#{apiResponseVO.apiVersion} and t.param_code=#{apiResponseVO.paramCode}
+    </update>
+    <update id="updateApiResponseVOStatusByApiId">
+        update api_admin.api_response set update_time=now(),status=#{status}
+        where api_id=#{apiId}
+    </update>
+    <select id="findApiList" resultType="com.biz.credit.vo.ApiVO" parameterType="com.biz.credit.vo.ApiVO">
+        select id, prod_code, prod_name, api_type, advertising, create_t, update_t, query, description, reqParams, respParams, price, cost, test_count, update_p, create_p from api_admin.api
+        where prod_code=#{apiVO.prodCode} and version=#{apiVO.version}
+    </select>
+    <select id="findApiRequestVOList" resultType="com.biz.credit.vo.ApiRequestVO" parameterType="com.biz.credit.vo.ApiRequestVO">
+        select a.id, a.api_id, a.param_code, a.param_type, a.required, a.param_name, a.param_desc, a.status, a.create_time, a.update_time from api_admin.api_request a
+        inner join api_admin.api b on b.id=a.api_id
+        where b.prod_code=#{apiRequestVO.apiProdCode} and b.version=#{apiRequestVO.apiVersion} and a.param_code=#{apiRequestVO.paramCode}
+    </select>
+    <select id="findApiResponseVOList" resultType="com.biz.credit.vo.ApiResponseVO" parameterType="com.biz.credit.vo.ApiResponseVO">
+        select a.id, a.api_id, a.param_code, a.param_type, a.length, a.param_name, a.param_desc, a.parent_id, a.status, a.create_time, a.update_time from api_admin.api_response a
+        inner join api_admin.api b on b.id=a.api_id
+        where b.prod_code=#{apiResponseVO.apiProdCode} and b.version=#{apiResponseVO.apiVersion} and a.param_code=#{apiResponseVO.paramCode} and a.parent_id=#{apiResponseVO.parentId}
+    </select>
+
+    <select id="queryList" resultType="com.biz.credit.vo.ApiVO" parameterType="com.biz.credit.vo.ApiVO">
+        select id, prod_code, prod_name, api_type, advertising, create_t, update_t, query, description, reqParams, respParams, price, cost, test_count, update_p, create_p from api_admin.api
+        where 1 = 1
+        <if test="api.prodName != null and api.prodName != ''">
+            and prod_name like concat('%',#{api.prodName},'%')
+        </if>
+        <if test="api.prodCode != null and api.prodCode != ''">
+            and prod_code like concat('%',#{api.prodCode},'%')
+        </if>
+    </select>
+
+    <select id="querySourceCount" resultType="map">
+        select s.source_id as sourceId,s.source_name as sourceName,count(a.id) as count
+          from api_admin.api_source s
+          left join (select a.* from api_admin.api a
+                      where exists (select 1 from t_project_api where api_code = #{apiCode} and prod_code = a.prod_code and version = a.version and status = 1)) a
+            on a.source_id = s.source_id
+         where (s.api_code is null or s.api_code = #{apiCode}) and biz_type in (1, 2) and s.status=1 and is_deleted=0
+         group by s.source_id order by s.source_id
+    </select>
+
+    <select id="queryApiByCodeAndVersion" parameterType="com.biz.credit.vo.ApiVO" resultType="com.biz.credit.vo.ApiVO">
+        select id, prod_code,version, prod_name, api_type, advertising, create_t, update_t, query, description, reqParams, respParams, price, cost, test_count, update_p, create_p from api_admin.api
+        where prod_code = #{apiVO.prodCode} and version = #{apiVO.version}
+    </select>
+
+    <select id="queryApiRequestList" parameterType="com.biz.credit.vo.ApiRequestVO" resultType="com.biz.credit.vo.ApiRequestVO">
+      select id, api_id, param_code, param_type, required, param_name, param_desc, status, create_time, update_time
+        from api_admin.api_request
+        where api_id = #{apiRequestVO.apiId} and status = 1
+    </select>
+
+    <select id="queryApiResponseList" parameterType="com.biz.credit.vo.ApiResponseVO" resultType="com.biz.credit.vo.ApiResponseVO">
+        select id, api_id, param_code, param_type, length, param_name, param_desc, parent_id, status, create_time, update_time
+        from api_admin.api_response
+        where api_id = #{apiResponseVO.apiId} and status = 1
+    </select>
+    <select id="findBizValidApiList" resultType="com.biz.credit.vo.ApiVO">
+        select id, prod_code, version, prod_name, source_id, api_type, advertising, varset_prod_code, varset_version, has_varset, biz_type, is_support_sync, api_req_type, prod_type, test_count, platform, price, cost, query, source_query_json_data, varset_query_json_data, source_result_json_data, varset_result_json_data, reqParams, respParams, introduction, data_description, description, is_deleted, update_p, update_t, create_p, create_t from api_admin.api
+        where is_deleted=0 and (source_query_json_data is not null or varset_query_json_data is not null or source_result_json_data is not null or varset_result_json_data is not null)
+    </select>
+</mapper>

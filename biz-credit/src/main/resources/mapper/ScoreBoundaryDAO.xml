@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.ScoreBoundaryDAO">
+
+    <insert id="insertList" useGeneratedKeys="true" keyProperty="scoreBoundaryId" parameterType="java.util.ArrayList">
+        insert into t_score_boundary(score_api_id, score, bd_left, bd_right, hit_value, status, create_time, last_update_time)
+        values
+        <foreach collection ="list" item="item" index="index" separator=",">
+            (#{item.scoreApiId},#{item.score},#{item.bdLeft},#{item.bdRight},#{item.hitValue},
+            #{item.status},now(),now())
+        </foreach>
+    </insert>
+
+    <update id="batchUpdateStatus">
+        update t_score_boundary set status = #{status}
+        where score_boundary_id in (
+        <foreach collection="scoreBoundaryIdList" item="item" index="index" separator=",">
+            #{item}
+        </foreach>
+        )
+    </update>
+
+</mapper>

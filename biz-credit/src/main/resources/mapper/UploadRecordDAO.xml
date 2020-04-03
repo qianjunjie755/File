@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.UploadRecordDAO">
+    <insert id="saveUploadRecord" parameterType="java.util.List" useGeneratedKeys="true"  keyProperty="id">
+        INSERT INTO `report`.`upload_record`
+        (`api_code`,
+        `user_id`,
+        `upload_count`,
+        `datetime`)
+        VALUES
+        <foreach collection="list"  item="item" separator="," index="index">
+            (#{item.apiCode},#{item.userId},#{item.uploadCount},#{item.datetime})
+        </foreach>
+
+    </insert>
+</mapper>

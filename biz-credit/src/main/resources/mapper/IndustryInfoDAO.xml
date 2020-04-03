@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.IndustryInfoDAO">
+    <select id="findListByIndustryInfoVO" resultType="com.biz.credit.vo.IndustryInfoVO">
+        select distinct (t.industry_id) industryId,t.industry_code industryCode,t.industry_name industryName,
+            t.model_version modelVersion,t.model_code modelCode,t.reject_interval rejectInterval,
+            t.refuse_start_score refuseStartScore,t.reconside_start_score reconsideStartScore,t.agree_start_score agreeStartScore,t.agree_end_score agreeEndScore,
+            t.reconsider_interval reconsiderInterval,t.pass_interval passInterval
+        from industry_info t
+        inner join industry_info_api t1
+        on t1.industry_id=t.industry_id
+        where t1.api_code=#{industryInfoVO.apiCode}
+        <if test="industryInfoVO.moduleTypeId != null">
+            and t1.module_type_id=#{industryInfoVO.moduleTypeId}
+        </if>
+    </select>
+    <select id="findIndustryInfoVOByIndustryId" resultType="com.biz.credit.vo.IndustryInfoVO">
+        select t.industry_id industryId,t.industry_code industryCode,t.industry_name industryName,
+               t.model_version modelVersion,t.model_code modelCode,t.reject_interval rejectInterval,
+               t.reconsider_interval reconsiderInterval,t.pass_interval passInterval,
+               t.refuse_start_score refuseStartScore,t.reconside_start_score reconsideStartScore,t.agree_start_score agreeStartScore,t.agree_end_score agreeEndScore,t.industry_type industryType
+        from industry_info t
+        where t.industry_id=#{industryId}
+    </select>
+    <select id="findIndustryInfoVOByIndustryCode" resultType="com.biz.credit.vo.IndustryInfoVO">
+        select t.industry_id industryId,t.industry_code industryCode,t.industry_name industryName,
+               t.model_version modelVersion,t.model_code modelCode,t.reject_interval rejectInterval,
+               t.reconsider_interval reconsiderInterval,t.pass_interval passInterval,t.boundary_type boundaryType,t.industry_description industryDescription,
+               t.refuse_start_score refuseStartScore,t.reconside_start_score reconsideStartScore,t.agree_start_score agreeStartScore,t.agree_end_score agreeEndScore,t.industry_type industryType
+        from industry_info t
+        where t.industry_code=#{industryCode} order by model_version desc
+    </select>
+    <select id="findIndustryInfoVOByIndustryInfoVO" resultType="com.biz.credit.vo.IndustryInfoVO">
+        select t.industry_id industryId,t.industry_code industryCode,t.industry_name industryName,
+               t.model_version modelVersion,t.model_code modelCode,t.reject_interval rejectInterval,
+               t.reconsider_interval reconsiderInterval,t.pass_interval passInterval
+        from industry_info t
+        where t.industry_code=#{industryInfoVO.industryCode} and t.model_version=#{industryInfoVO.modelVersion}
+    </select>
+
+    <select id="findIndustryInfoByIndustryType" resultType="com.biz.credit.vo.IndustryInfoVO">
+        select t.industry_id industryId
+        from industry_info t
+        where t.industry_type=#{industryInfoVO.industryType}
+    </select>
+    <select id="findScoreVariableList" resultType="com.biz.credit.vo.ReportVariableVO">
+        select a.id*-1 ruleId,a.prod_code prodCode,a.prod_name prodName,a.query_param params,a.version,a.result_param params2,b.model_param_code pdfCode,3 apiReqType
+        from industry_api a
+            inner join industry_info_param b on b.industry_api_id=a.id
+            inner join industry_info c on c.industry_id=b.industry_info_id
+        where c.industry_id=#{industryInfoVO.industryId}
+    </select>
+    <select id="findApiProdCodeListByIndustryId" resultType="java.lang.String">
+        select distinct(a.api_prod_code)  from industry_api a
+            inner join industry_info_param b on a.id=b.industry_api_id
+        where b.industry_info_id=#{industryId}
+    </select>
+    <select id="findAllIndustryInfoVOList" resultType="com.biz.credit.vo.IndustryInfoVO">
+        select  distinct(industry_code) industry_code,industry_id, industry_name, last_update_time, create_time, model_code, model_version, reject_interval, reconsider_interval, pass_interval, refuse_start_score, reconside_start_score, agree_start_score, agree_end_score, industry_type,boundary_type,industry_description
+        from industry_info where industry_code != 'NoScoreReport' order by industry_id asc
+    </select>
+    <select id="findAllIndustryInfoVOAndVersionList" resultType="com.biz.credit.vo.IndustryInfoVO">
+        select  industry_code,industry_id, industry_name, last_update_time, create_time, model_code, model_version, reject_interval, reconsider_interval, pass_interval, refuse_start_score, reconside_start_score, agree_start_score, agree_end_score, industry_type,boundary_type,industry_description
+        from industry_info  order by industry_id asc
+    </select>
+
+</mapper>

@@ -1,0 +1,482 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.warning.dao.EntityDAO">
+    <resultMap id="entityVOMap" type="com.biz.warning.vo.EntityVO" >
+        <result column="entity_id" property="entityId" />
+        <result column="entity_name" property="entityName" />
+        <result column="upload_time" property="uploadTime" />
+        <result column="user_id" property="userId" />
+        <result column="api_code" property="apiCode" />
+        <result column="task_id" property="taskId" />
+        <result column="entity_status" property="entityStatus" />
+        <result column="expire_time" property="expireTime" />
+        <result column="exec_date" property="execDate" />
+        <result column="application_date" property="applicationDate" />
+        <result column="last_update_time" property="lastUpdateTime" />
+        <result column="company_name" property="companyName" />
+        <result column="legal_person" property="legalPerson" />
+        <result column="person_id" property="personId" />
+        <result column="cell" property="cell" />
+        <result column="credit_code" property="creditCode" />
+        <result column="bank_id" property="bankId" />
+        <result column="home_addr" property="homeAddr" />
+        <result column="biz_addr" property="bizAddr" />
+        <result column="task_status" property="taskStatus" />
+        <result column="parent_app_id" property="parentAppId" />
+        <result column="hit_count" property="hitCount" />
+
+        <result column="regist_no" property="registNo" />
+        <result column="regist_capital" property="registCapital" />
+        <result column="company_status" property="companyStatus" />
+        <result column="create_time" property="createTime" />
+        <result column="legal_person_name" property="legalPersonName" />
+        <result column="regist_address" property="registAddress" />
+        <result column="biz_scope" property="bizScope" />
+
+    </resultMap>
+    <resultMap id="taskVOMap"  type="com.biz.warning.vo.TaskVO">
+        <result column="task_id" property="taskId" />
+        <result column="task_no" property="taskCode" />
+        <result column="task_name" property="taskName" />
+        <result column="business_code" property="businessCode" />
+        <result column="strategy_id" property="strategyVO.strategyId" />
+        <result column="task_status" property="taskStatus" />
+        <result column="description" property="description" />
+        <result column="last_update_time" property="lastUpdateTime" />
+        <result column="create_time" property="createTime" />
+        <result column="business_code" property="businessCode" />
+    </resultMap>
+    <insert id="addEntities" useGeneratedKeys="true"  parameterType="java.util.List"  keyProperty="entityId">
+        insert into risk_warning.t_entity (entity_name, upload_time, user_id, task_id, expire_time, description, last_update_time, create_time,company_name,person_id,legal_person,bank_id,credit_code,cell,api_code,home_addr,biz_addr,entity_status,parent_app_id,application_date, entity_params)
+        values
+        <foreach collection="list"  item="item" separator="," index="index">
+            (#{item.entityName},#{item.uploadTime},#{item.userId},#{item.taskId},#{item.expireTime},#{item.description},now(),now(),#{item.companyName},#{item.personId},#{item.legalPerson},#{item.bankId},#{item.creditCode},#{item.cell},#{item.apiCode},#{item.homeAddr},#{item.bizAddr},#{item.entityStatus},#{item.parentAppId},#{item.applicationDate},#{item.params})
+        </foreach>
+    </insert>
+    <update id="updateEntityStatus" parameterType="com.biz.warning.vo.EntityVO">
+      update risk_warning.t_entity set entity_status = #{entityVO.entityStatus} where entity_id=#{entityVO.entityId}
+    </update>
+    <update id="updateEntityParentAppIdAndStatus">
+        update risk_warning.t_entity set parent_app_id=#{entityVO.parentAppId},entity_status=#{entityVO.entityStatus},last_update_time=now(),
+        exec_date=#{entityVO.execDate}
+        where entity_id=#{entityVO.entityId}
+    </update>
+    <update id="updateHitCountByTaskInput" >
+        update risk_warning.t_entity set hit_count=hit_count+#{hitCount},last_update_time=now() where entity_id=#{entityId}
+    </update>
+    <delete id="deleteEntityVOList">
+        update risk_warning.t_entity set last_update_time=now(),entity_status=3 where user_id=#{userId} and entity_id in
+        <foreach  item="item" collection="list" index="index"  open="(" separator="," close=")">
+            #{item.entityId}
+        </foreach>
+    </delete>
+    <select resultMap="entityVOMap" id="findListByEntityVOForTask" >
+      select t.entity_id ,t.entity_name,t.user_id ,t.api_code, t.task_id ,t.entity_status ,t.expire_time ,
+      t.company_name,t.legal_person,t.person_id,t.cell,t.credit_code,t.bank_id,t1.task_status,t.parent_app_id,t.application_date
+      from risk_warning.t_entity t
+        inner join risk_warning.t_task t1
+        on t1.task_id=t.task_id
+      where 1=1
+      <if test="null != entityVO.limitId">
+          and t.entity_id&gt;#{entityVO.limitId}
+      </if>
+      order by t.entity_id asc limit 100
+    </select>
+    <select id="findListByEntityVO" resultMap="entityVOMap" parameterType="com.biz.warning.vo.EntityVO">
+        select t.entity_id ,t.entity_name,t.user_id ,t.api_code, t.task_id ,t.entity_status ,date_format(t.expire_time,'%Y-%m-%d') expire_time,
+            t.company_name,t.legal_person,t.person_id,t.cell,t.credit_code,t.bank_id,t.home_addr,t.biz_addr,date_format(t.application_date,'%Y-%m-%d') application_date
+        from risk_warning.t_entity t
+        where t.task_id=#{entityVO.taskId} and t.api_code=#{entityVO.apiCode}
+        <if test="null != entityVO.entityStatus and 0 != entityVO.entityStatus">
+            and  t.entity_status = #{entityVO.entityStatus}
+        </if>
+        <if test="null != entityVO.startDate and '' != entityVO.startDate">
+            and  t.expire_time &gt;= #{entityVO.startDate}
+        </if>
+        <if test="null != entityVO.endDate and '' != entityVO.endDate">
+            and  t.expire_time &lt;= #{entityVO.endDate}
+        </if>
+        <if test="null != entityVO.companyName and '' != entityVO.companyName">
+            and t.company_name like concat('%',concat(#{entityVO.companyName},'%'))
+        </if>
+        order by t.entity_status asc,t.entity_id desc
+    </select>
+    <select id="findCountByTaskId" resultType="java.lang.Integer">
+        select count(1) from risk_warning.t_entity where task_id=#{taskId} and entity_status=1
+    </select>
+    <select id="findEntitiesByCompanyNames" resultType="com.biz.warning.domain.Entity">
+        select entity_name entityName,entity_status,parent_app_id from risk_warning.t_entity where task_id=#{taskId}   and  entity_name in
+        <foreach  item="item" collection="list" index="index"  open="(" separator="," close=")">
+            #{item}
+        </foreach>
+         order by entity_id desc
+    </select>
+    <select id="findEntityNamesByTask" resultType="java.lang.String">
+        select distinct(entity_name) entityName from risk_warning.t_entity where task_id=#{task.taskId} and entity_status=1
+    </select>
+    <select id="findTaskInputListByTaskId" resultType="com.biz.strategy.entity.TaskInput">
+        select t.entity_id inputId,date_format(t.expire_time,'%Y-%m-%d') expireTime,date_format(t.application_date,'%Y-%m-%d') applyDate,
+            t.company_name companyName,t.legal_person legalPerson,
+            t.person_id legalPersonID,t.cell legalPersonPhone,
+            t.credit_code creditCode,t.bank_id companyBankId,
+            t.home_addr legalPersonHomeAddr,t.biz_addr legalPersonWorkAddr,
+            t.parent_app_id appId,date_format(t.upload_time,'%Y-%m-%d') inputDate,
+            t.exec_date execDate, t.entity_params as params
+        from risk_warning.t_entity t where t.task_id=#{taskId} and t.entity_status=1 order by t.entity_id asc
+    </select>
+
+    <select id="findAllEntities" resultMap="entityVOMap">
+        SELECT t.entity_name,MAX(t.upload_time) upload_time FROM t_entity t
+        WHERE (t.entity_status = 1 OR t.entity_status = 2)
+          AND t.api_code = #{apiCode}
+        <if test="userIdList != null and userIdList.size > 0">
+            <![CDATA[ AND t.user_id in ]]>
+            <foreach collection="userIdList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+         GROUP BY t.entity_name ORDER BY 2 DESC
+    </select>
+
+    <select id="findEntities" resultMap="entityVOMap">
+        SELECT
+        t.entity_name,
+        MAX(t.upload_time)    upload_time
+        FROM t_entity t
+        WHERE (t.entity_status = 1 OR t.entity_status = 2)
+          AND t.api_code = #{apiCode}
+        <if test="userIdList != null and userIdList.size > 0">
+            <![CDATA[ AND t.user_id in ]]>
+            <foreach collection="userIdList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="null != nameOrCode and ''!=nameOrCode ">
+            AND (t.company_name like CONCAT('%',#{nameOrCode},'%') OR t.credit_code like CONCAT('%',#{nameOrCode},'%'))
+        </if>
+        <if test="null != uploadTime and ''!=uploadTime">
+            AND t.upload_time &gt;= STR_TO_DATE(#{uploadTime}, '%Y-%m-%d')
+        </if>
+        <if test="null != expireTime and ''!=expireTime">
+            AND t.expire_time &lt;= STR_TO_DATE(#{expireTime}, '%Y-%m-%d')
+        </if>
+        GROUP BY t.entity_name
+        ORDER BY 2 DESC
+    </select>
+
+    <select id="findEntityDetail" resultMap="entityVOMap">
+        SELECT MAX(t.credit_code) credit_code,
+        MAX(t.legal_person) legal_person,
+        MAX(t.cell) cell,
+        MAX(t.home_addr) home_addr,
+        MAX(t.person_id) person_id,
+        MAX(t.biz_addr) biz_addr,
+        DATE_FORMAT(MAX(t.upload_time),"%Y-%m-%d") upload_time,
+        MAX(t.user_id) user_id
+        FROM t_entity t
+        WHERE t.company_name = #{entityName} AND t.user_id = #{userId}
+        AND (t.entity_status = 1 OR t.entity_status = 2)
+        GROUP BY t.company_name;
+    </select>
+
+    <select id="findEntityBasicInfoByName" resultMap="entityVOMap">
+        select * from t_entity_basic_info where company_name=#{entityName} order by update_time desc limit 1
+    </select>
+
+    <select id="findTasksByEntity" resultMap="taskVOMap">
+        SELECT t.task_id,t.task_name FROM t_entity e INNER JOIN t_task t ON e.task_id=t.task_id
+        WHERE e.entity_name = #{entityName} AND (e.entity_status = 1 OR e.entity_status = 2)
+          AND e.api_code = #{apiCode}
+        <if test="userIdList != null and userIdList.size > 0">
+            <![CDATA[ AND e.user_id in ]]>
+            <foreach collection="userIdList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY t.task_id,t.task_name;
+    </select>
+    <delete id="deleteEntityByTask">
+        UPDATE t_entity SET entity_status = 3 WHERE entity_name = #{entityName} AND task_id = #{taskId}
+           AND api_code = #{apiCode}
+        <if test="userIdList != null and userIdList.size > 0">
+            <![CDATA[ AND user_id in ]]>
+            <foreach collection="userIdList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </delete>
+
+    <delete id="deleteEntity">
+        UPDATE t_entity SET entity_status = 3 WHERE entity_name = #{entityName} AND user_id = #{userId}
+    </delete>
+    <select id="findHitEntityMostList" resultMap="entityVOMap">
+         select b.company_name,count(b.company_name) hit_count from risk_warning.t_warn_result_variable a
+        inner join risk_warning.t_variable_pool c on c.variable_code=a.variable_code
+        inner join risk_warning.t_entity b on b.entity_id=a.entity_id
+        where b.api_code=#{apiCode}
+        group by(b.company_name)
+        order by hit_count desc  limit 10
+    </select>
+    <select id="findHitEntityMostListByUserIds" resultMap="entityVOMap">
+        select b.company_name,count(b.company_name) hit_count from risk_warning.t_warn_result_variable a
+        inner join risk_warning.t_variable_pool c on c.variable_code=a.variable_code
+        inner join risk_warning.t_entity b on b.entity_id=a.entity_id
+        where b.api_code = #{apiCode}
+        <if test="list != null and list.size > 0">
+          and b.user_id in
+          <foreach collection="list"  item="userId" separator="," open="(" close=")" index="index">
+                #{userId}
+          </foreach>
+        </if>
+        group by(b.company_name)
+        order by hit_count desc  limit 10
+    </select>
+    <select id="countEntityAmountByApiCode" resultType="com.biz.warning.domain.EntityCount">
+        <![CDATA[SELECT "0" AS entity_status ,  COUNT( DISTINCT e.company_name) AS entity_count
+                FROM t_entity e INNER JOIN t_task t
+                ON e.task_id = t.task_id
+                WHERE t.task_status <> 0
+                AND e.api_code = #{apiCode}
+                UNION
+                SELECT "1" AS entity_status ,  COUNT( DISTINCT e.company_name) AS entity_count
+                FROM t_entity e INNER JOIN t_task t
+                ON e.task_id = t.task_id
+                WHERE t.task_status <> 0
+                AND e.api_code = #{apiCode}
+                AND e.entity_status = 1 AND t.task_status = 1 ]]>
+    </select>
+    <select id="countEntityAmountByUserIds" resultType="com.biz.warning.domain.EntityCount">
+        <![CDATA[SELECT "0" AS entity_status ,  COUNT( DISTINCT e.company_name) AS entity_count
+                FROM t_entity e INNER JOIN t_task t
+                ON e.task_id = t.task_id
+                WHERE t.task_status <> 0
+                  and e.api_code = #{apiCode}]]>
+                 <if test="list != null and list.size > 0">
+                  AND e.user_id IN
+                  <foreach collection="list"  item="userId" separator="," open="(" close=")" index="index">
+                      #{userId}
+                  </foreach>
+                 </if>
+        <![CDATA[ UNION
+                SELECT "1" AS entity_status ,  COUNT( DISTINCT e.company_name) AS entity_count
+                FROM t_entity e INNER JOIN t_task t
+                ON e.task_id = t.task_id
+                WHERE e.entity_status = 1 AND t.task_status = 1
+                and e.api_code = #{apiCode}]]>
+                <if test="list != null and list.size > 0">
+                AND e.user_id IN
+                 <foreach collection="list"  item="userId" separator="," open="(" close=")" index="index">
+                     #{userId}
+                 </foreach>
+                </if>
+    </select>
+    <select id="countHitTrendByApiCode" resultType="com.biz.warning.domain.HitTrendCount">
+        <![CDATA[SELECT DATE_FORMAT(a.hit_time, '%Y/%m/%d')AS hit_date,
+                        COUNT(1) AS hit_count
+                   FROM t_warn_result_variable a
+                  INNER JOIN t_entity b
+                     ON a.entity_id = b.entity_id
+                    AND b.entity_status IN (1, 2, 3)
+                  INNER JOIN t_variable_pool c
+                     ON a.variable_code = c.variable_code
+                    AND c.valid = 1
+                    AND c.source_id IS NOT NULL
+                  WHERE b.api_code = #{apiCode}]]>
+                <if test="n != 0 and unit == 1">
+                    <![CDATA[ AND a.hit_time >= DATE_ADD(CURDATE(), INTERVAL -${n} DAY)]]>
+                </if>
+                <if test="n != 0 and unit == 2">
+                    <![CDATA[ AND a.hit_time >= DATE_ADD(CURDATE(), INTERVAL -${n} WEEK)]]>
+                </if>
+                <if test="n != 0 and unit == 3">
+                    <![CDATA[ AND a.hit_time >= DATE_ADD(CURDATE(), INTERVAL -${n} MONTH)]]>
+                </if>
+                <if test="n != 0 and unit == 4">
+                    <![CDATA[ AND a.hit_time >= DATE_ADD(CURDATE(), INTERVAL -${n} YEAR)]]>
+                </if>
+        <![CDATA[ GROUP BY DATE_FORMAT(a.hit_time, '%Y/%m/%d')
+                  ORDER BY 1]]>
+    </select>
+    <select id="countHitTrendByUserIds" resultType="com.biz.warning.domain.HitTrendCount">
+        <![CDATA[SELECT DATE_FORMAT(a.hit_time, '%Y/%m/%d')AS hit_date,
+                        COUNT(1) AS hit_count
+                   FROM t_warn_result_variable a
+                  INNER JOIN t_entity b
+                     ON a.entity_id = b.entity_id
+                    AND b.entity_status IN (1, 2,3)
+                  INNER JOIN t_variable_pool c
+                     ON a.variable_code = c.variable_code
+                    AND c.valid = 1
+                    AND c.source_id IS NOT NULL
+                  WHERE b.api_code = #{apiCode}]]>
+                 <if test="list != null and list.size > 0">
+                  and b.user_id IN
+                  <foreach collection="list"  item="userId" separator="," open="(" close=")" index="index">
+                    #{userId}
+                  </foreach>
+                 </if>
+                 <if test="n != 0 and unit == 1">
+                    <![CDATA[ AND a.hit_time >= DATE_ADD(CURDATE(), INTERVAL -${n} DAY)]]>
+                 </if>
+                 <if test="n != 0 and unit == 2">
+                    <![CDATA[ AND a.hit_time >= DATE_ADD(CURDATE(), INTERVAL -${n} WEEK)]]>
+                 </if>
+                 <if test="n != 0 and unit == 3">
+                    <![CDATA[ AND a.hit_time >= DATE_ADD(CURDATE(), INTERVAL -${n} MONTH)]]>
+                 </if>
+                 <if test="n != 0 and unit == 4">
+                    <![CDATA[ AND a.hit_time >= DATE_ADD(CURDATE(), INTERVAL -${n} YEAR)]]>
+                 </if>
+        <![CDATA[ GROUP BY DATE_FORMAT(a.hit_time, '%Y/%m/%d')
+                  ORDER BY 1]]>
+    </select>
+    <select id="getFirstDateByUserIds" resultType="java.lang.String">
+        <![CDATA[SELECT DATE_FORMAT(MIN(upload_time), '%Y-%m-%d') AS first_date FROM t_entity
+                  WHERE api_code = #{apiCode}]]>
+                 <if test="list != null and list.size > 0">
+                   and user_id in
+                    <foreach collection="list"  item="userId" separator="," open="(" close=")" index="index">
+                        #{userId}
+                    </foreach>
+                 </if>
+    </select>
+    <select id="getFirstDateByApiCode" resultType="java.lang.String">
+        <![CDATA[SELECT DATE_FORMAT(MIN(upload_time), '%Y-%m-%d') AS first_date FROM t_entity WHERE api_code = #{apiCode}]]>
+    </select>
+    <update id="updateEntityBasicInfo">
+        <![CDATA[UPDATE t_entity_basic_info
+                    SET company_name = #{entityBasic.companyName},
+                        credit_code = #{entityBasic.creditCode},
+                        regist_no = #{entityBasic.registNo},
+                        regist_capital = #{entityBasic.registCapital},
+                        company_status = #{entityBasic.companyStatus},
+                        create_time = #{entityBasic.createTime},
+                        legal_person_name = #{entityBasic.legalPersonName},
+                        regist_address = #{entityBasic.registAddress},
+                        biz_scope = #{entityBasic.bizScope},
+                        update_time = CURRENT_TIMESTAMP()
+                  WHERE entity_id = #{entityBasic.entityId}]]>
+    </update>
+    <insert id="insertEntityBasicInfo">
+        <![CDATA[INSERT INTO t_entity_basic_info
+                 (entity_id,
+                  company_name,
+                  credit_code,
+                  regist_no,
+                  regist_capital,
+                  company_status,
+                  create_time,
+                  legal_person_name,
+                  regist_address,
+                  biz_scope)
+                 VALUES (#{entityBasic.entityId},
+                    #{entityBasic.companyName},
+                    #{entityBasic.creditCode},
+                    #{entityBasic.registNo},
+                    #{entityBasic.registCapital},
+                    #{entityBasic.companyStatus},
+                    #{entityBasic.createTime},
+                    #{entityBasic.legalPersonName},
+                    #{entityBasic.registAddress},
+                    #{entityBasic.bizScope})]]>
+    </insert>
+
+
+    <select id="findHistoryParam" resultMap="entityVOMap">
+      select t.entity_id ,t.entity_name,t.user_id ,t.api_code, t.task_id ,t.entity_status ,date_format(t.expire_time,'%Y-%m-%d') expire_time,date_format(t.exec_date,'%Y-%m-%d') exec_date,date_format(t.last_update_time,'%Y-%m-%d') last_update_time,
+            t.company_name,t.legal_person,t.person_id,t.cell,t.credit_code,t.bank_id,t.home_addr,t.biz_addr,date_format(t.application_date,'%Y-%m-%d') application_date
+        from t_entity t where task_id=#{taskId} and entity_name=#{entityName}
+        <if test="apiCode == null and apiCode != ''">
+            <![CDATA[ AND t.api_code = #{apiCode}]]>
+        </if>
+        <if test="userIdList != null and userIdList.size > 0">
+            <![CDATA[ AND t.user_id in ]]>
+            <foreach collection="userIdList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+         order by upload_time desc limit 1
+    </select>
+    <select id="countMonitorAndHitTrend" resultType="com.biz.warning.domain.HitTrendCount">
+        SELECT a.hitDate ,COUNT(DISTINCT b.company) as hit_count
+        FROM (SELECT  DATE_FORMAT(e.create_time, '%Y/%m/%d') AS hitDate,e.company_name AS company
+        FROM t_entity e INNER JOIN t_task t
+        ON e.task_id = t.task_id
+        WHERE <![CDATA[t.task_status <> 0 ]]>
+        <if test="apiCode != null and apiCode !=''" >
+            AND e.api_code = #{apiCode}
+        </if>
+        <if test="list !=null and list.size>0" >
+            AND e.user_id in
+            <foreach collection="list"  item="userId" separator="," open="(" close=")" index="index">
+                #{userId}
+            </foreach>
+        </if>
+        GROUP BY  hitDate,company ASC) a
+        inner join
+        (SELECT  DATE_FORMAT(e.create_time, '%Y/%m/%d') AS hitDate,e.company_name AS company
+        FROM t_entity e INNER JOIN t_task t
+        ON e.task_id = t.task_id
+        WHERE <![CDATA[t.task_status <> 0 ]]>
+        <if test="apiCode != null and apiCode !=''" >
+            AND e.api_code = #{apiCode}
+        </if>
+        <if test="list !=null and list.size>0" >
+            AND e.user_id in
+            <foreach collection="list"  item="userId" separator="," open="(" close=")" index="index">
+                #{userId}
+            </foreach>
+        </if>
+        GROUP BY  hitDate,company ASC) b
+        on a.hitDate>=b.hitDate
+        <if test="beginDay != null">
+            AND a.hitDate BETWEEN #{beginDay} AND #{toDay}
+        </if>
+        GROUP BY  a.hitDate ASC
+    </select>
+    <select id="countHitRuleCompany" resultType="com.biz.warning.domain.HitTrendCount">
+        <![CDATA[SELECT k.days  AS hitDate,COUNT(DISTINCT j.company_name) hit_count FROM
+        (
+        SELECT DATE_FORMAT(a.hit_time, '%Y/%m/%d') AS days
+        FROM risk_warning.t_warn_result_rule a
+        INNER JOIN risk_warning.t_rule c ON c.rule_id=a.rule_id
+        INNER JOIN risk_warning.t_entity b ON b.entity_id=a.entity_id]]>
+        WHERE 1
+        <if test="apiCode != null and apiCode !=''" >
+                  AND b.api_code = #{apiCode}
+        </if>
+        <if test="list !=null and list.size>0" >
+            AND b.user_id in
+            <foreach collection="list"  item="userId" separator="," open="(" close=")" index="index">
+                #{userId}
+            </foreach>
+        </if>
+        <if test="beginDay != null">
+            <![CDATA[AND a.hit_time BETWEEN #{beginDay} AND #{toDay}]]>
+        </if>
+        <![CDATA[ GROUP BY days
+        ) k INNER JOIN
+        (
+        SELECT DATE_FORMAT(a.hit_time, '%Y/%m/%d') AS days,b.company_name AS company_name
+        FROM risk_warning.t_warn_result_rule a
+        INNER JOIN risk_warning.t_rule c ON c.rule_id=a.rule_id
+        INNER JOIN risk_warning.t_entity b ON b.entity_id=a.entity_id]]>
+        WHERE 1
+        <if test="apiCode != null and apiCode !=''" >
+            AND b.api_code = #{apiCode}
+        </if>
+        <if test="list !=null and list.size>0" >
+            AND b.user_id in
+            <foreach collection="list"  item="userId" separator="," open="(" close=")" index="index">
+                #{userId}
+            </foreach>
+        </if>
+        <if test="beginDay != null">
+            <![CDATA[AND a.hit_time BETWEEN #{beginDay} AND #{toDay}]]>
+        </if>
+        GROUP BY days,company_name) j
+        ON k.days >= j.days
+        GROUP BY hitDate
+        ORDER BY hitDate ASC
+    </select>
+</mapper>

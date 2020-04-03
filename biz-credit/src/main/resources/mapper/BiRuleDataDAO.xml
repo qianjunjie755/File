@@ -1,0 +1,521 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.BiRuleDataDAO">
+    <insert id="addBiRuleDataList" parameterType="java.util.List" useGeneratedKeys="true"  keyProperty="id">
+        insert into bi_rule_data (input_file_detail_id, rule_id, hit, date, month, datetime,year,result_value,`interval`,weight,threshold) VALUES
+        <foreach collection="list"  item="item" separator="," index="index">
+            (#{item.inputFileDetailId},#{item.ruleId},#{item.hit},#{item.date},#{item.month},#{item.datetime},#{item.year},#{item.resultValue},#{item.interval},#{item.weight},#{item.threshold})
+        </foreach>
+    </insert>
+    <insert id="addApiBiRuleDataList" parameterType="java.util.List" useGeneratedKeys="true"  keyProperty="id">
+        insert into api_bi_rule_data (input_file_detail_id, rule_id, hit, date, month, datetime,year,result_value,`interval`,weight,threshold) VALUES
+        <foreach collection="list"  item="item" separator="," index="index">
+            (#{item.inputFileDetailId},#{item.ruleId},#{item.hit},#{item.date},#{item.month},#{item.datetime},#{item.year},#{item.resultValue},#{item.interval},#{item.weight},#{item.threshold})
+        </foreach>
+    </insert>
+
+
+
+
+    <resultMap id="biRuleData_map" type="com.biz.credit.domain.responseData.BiRuleDataRes">
+        <result property="date_" column="date_"/>
+        <result property="count_" column="count_"/>
+    </resultMap>
+    <select id="findBiRuleDataByDayList" resultMap="biRuleData_map" parameterType="com.biz.credit.domain.responseData.BiRuleDataRes">
+        SELECT DISTINCT date_data.date date_ , IFNULL(count_data.count_ ,0) count_
+          FROM bi_date date_data
+          LEFT JOIN (
+          <if test="biRuleData.groupId == null or biRuleData.groupId == 0">
+          SELECT sum(count_) count_, date_ FROM (
+          </if>
+          SELECT count(r.date) count_,r.date date_
+            FROM bi_rule_data r inner join bi_input_data s on r.input_file_detail_id=s.input_file_detail_id
+           WHERE s.type = 1 and r.hit=1 and s.report_status = 1
+            <if test="biRuleData.apiCode != null">
+                and s.api_code=#{biRuleData.apiCode}
+                and s.module_type_id in (SELECT api.module_type_id FROM module_type_api api where api.api_code=#{biRuleData.apiCode})
+            </if>
+            <if test="biRuleData.groupId != null and biRuleData.groupId !=0">
+                and s.group_id = #{biRuleData.groupId}
+            </if>
+            <if test="biRuleData.industryId != null and biRuleData.industryId != 0">
+                and exists (select 1 from bi_model where input_id = s.input_file_detail_id and type = 4 and model_id = #{biInputData.industryId})
+            </if>
+            <if test="biRuleData.reportType != null and biRuleData.reportType !=0">
+                and s.report_type = #{biRuleData.reportType}
+            </if>
+            <if test="biRuleData.moduleTypeId != null and biRuleData.moduleTypeId !=0">
+                and s.module_type_id = #{biRuleData.moduleTypeId}
+            </if>
+            <if test="biRuleData.startDate != null ">
+                and r.date &gt;= #{biRuleData.startDate}
+            </if>
+            <if test="biRuleData.endDate != null">
+                and r.date &lt;= #{biRuleData.endDate}
+            </if>
+           group by r.date
+          <if test="biRuleData.groupId == null or biRuleData.groupId == 0">
+          UNION ALL
+          SELECT count(r.date) count_,r.date date_
+            FROM api_bi_rule_data r inner join api_bi_input_data s on r.input_file_detail_id=s.input_file_detail_id
+           WHERE s.type = 1 and r.hit=1 and s.report_status = 1
+            <if test="biRuleData.apiCode != null">
+              and s.api_code=#{biRuleData.apiCode}
+              and s.module_type_id in (SELECT api.module_type_id FROM module_type_api api where api.api_code=#{biRuleData.apiCode})
+            </if>
+            <if test="biRuleData.industryId != null and biRuleData.industryId != 0">
+              and exists (select 1 from api_bi_model where input_id = s.input_file_detail_id and type = 4 and model_id = #{biInputData.industryId})
+            </if>
+            <if test="biRuleData.reportType != null and biRuleData.reportType !=0">
+              and s.report_type = #{biRuleData.reportType}
+            </if>
+            <if test="biRuleData.moduleTypeId != null and biRuleData.moduleTypeId !=0">
+              and s.module_type_id = #{biRuleData.moduleTypeId}
+            </if>
+            <if test="biRuleData.startDate != null ">
+              and r.date &gt;= #{biRuleData.startDate}
+            </if>
+            <if test="biRuleData.endDate != null">
+              and r.date &lt;= #{biRuleData.endDate}
+            </if>
+            group by r.date) t group by t.date_
+          </if>
+        ) count_data
+        ON date_data.date = count_data.date_
+        <where>1=1
+            <if test="biRuleData.startDate != null ">
+                and date_data.date &gt;= #{biRuleData.startDate}
+            </if>
+            <if test="biRuleData.endDate != null">
+                and date_data.date &lt;= #{biRuleData.endDate}
+            </if>
+        </where>
+        order by  date_data.date asc
+    </select>
+
+    <select id="findBiRuleDataByMonthList" resultMap="biRuleData_map"
+            parameterType="com.biz.credit.domain.responseData.BiRuleDataRes">
+        SELECT DISTINCT
+        date_data.month date_, IFNULL(count_data.count_ ,0) count_
+        FROM bi_date date_data
+        LEFT JOIN
+        (SELECT count(r.month) count_,r.month date_
+        from
+        bi_rule_data r inner join bi_input_data s on r.input_file_detail_id=s.input_file_detail_id
+        <where>1=1 and r.hit=1
+            <if test="biRuleData.apiCode != null">
+                and s.api_code=#{biRuleData.apiCode}
+                and s.module_type_id in (SELECT api.module_type_id FROM module_type_api api where api.api_code=#{biRuleData.apiCode})
+            </if>
+            <if test="biRuleData.groupId != null and biRuleData.groupId !=0">
+                and s.group_id = #{biRuleData.groupId}
+            </if>
+            <if test="biRuleData.industryId != null and biRuleData.industryId != 0">
+                and s.industry_id = #{biRuleData.industryId}
+            </if>
+            <if test="biRuleData.reportType != null and biRuleData.reportType !=0">
+                and s.report_type = #{biRuleData.reportType}
+            </if>
+            <if test="biRuleData.moduleTypeId != null and biRuleData.moduleTypeId !=0">
+                and s.module_type_id = #{biRuleData.moduleTypeId}
+            </if>
+            <if test="biRuleData.startMonth != null ">
+                and r.month &gt;= #{biRuleData.startMonth}
+            </if>
+            <if test="biRuleData.endMonth != null">
+                and r.month &lt;= #{biRuleData.endMonth}
+            </if>
+
+        </where>
+        group by r.month) count_data
+        ON date_data.month = count_data.date_
+        <where>1=1
+            <if test="biRuleData.startMonth != null ">
+                and date_data.month &gt;= #{biRuleData.startMonth}
+            </if>
+            <if test="biRuleData.endMonth != null">
+                and date_data.month &lt;= #{biRuleData.endMonth}
+            </if>
+        </where>
+        order by  date_data.month asc;
+    </select>
+
+    <select id="findBiRuleDataByYearList" resultMap="biRuleData_map"
+            parameterType="com.biz.credit.domain.responseData.BiRuleDataRes">
+        SELECT DISTINCT
+        date_data.year date_, IFNULL(count_data.count_ ,0) count_
+        FROM bi_date date_data
+        LEFT JOIN
+        (SELECT count(r.year) count_,r.year date_
+        from
+        bi_rule_data r inner join bi_input_data s on r.input_file_detail_id=s.input_file_detail_id
+        <where>1=1 and r.hit=1
+            <if test="biRuleData.apiCode != null">
+                and s.api_code=#{biRuleData.apiCode}
+                and s.module_type_id in (SELECT api.module_type_id FROM module_type_api api where api.api_code=#{biRuleData.apiCode})
+            </if>
+            <if test="biRuleData.groupId != null and biRuleData.groupId !=0">
+                and s.group_id = #{biRuleData.groupId}
+            </if>
+            <if test="biRuleData.industryId != null and biRuleData.industryId != 0">
+                and s.industry_id = #{biRuleData.industryId}
+            </if>
+            <if test="biRuleData.reportType != null and biRuleData.reportType !=0">
+                and s.report_type = #{biRuleData.reportType}
+            </if>
+            <if test="biRuleData.moduleTypeId != null and biRuleData.moduleTypeId !=0">
+                and s.module_type_id = #{biRuleData.moduleTypeId}
+            </if>
+            <if test="biRuleData.startYear != null ">
+                and r.year &gt;= #{biRuleData.startYear}
+            </if>
+            <if test="biRuleData.endYear != null">
+                and r.year &lt;= #{biRuleData.endYear}
+            </if>
+
+        </where>
+        group by r.year) count_data
+        ON date_data.year = count_data.date_
+        <where>1=1
+            <if test="biRuleData.startYear != null ">
+                and date_data.year &gt;= #{biRuleData.startYear}
+            </if>
+            <if test="biRuleData.endYear != null">
+                and date_data.year &lt;= #{biRuleData.endYear}
+            </if>
+        </where>
+        order by date_data.year asc;
+    </select>
+
+    <select id="findHitRuleCompanyByDayList" resultMap="biRuleData_map" parameterType="com.biz.credit.domain.responseData.BiRuleDataRes">
+        SELECT distinct(date_data.date) date_,ifnull(count_data.count_,0) count_
+          FROM bi_date date_data
+          left join (
+        <if test="biRuleData.groupId == null or biRuleData.groupId == 0">
+        select sum(count_) count_, date from (
+        </if>
+        select count(1) count_,s.date from bi_input_data s
+        <where>
+            s.hit=1 and s.report_status=1 and s.type = 1
+            <if test="biRuleData.apiCode != null">
+                and s.api_code=#{biRuleData.apiCode}
+                and s.module_type_id in (SELECT api.module_type_id FROM module_type_api api where api.api_code=#{biRuleData.apiCode})
+            </if>
+            <if test="biRuleData.groupId != null and biRuleData.groupId !=0">
+                and s.group_id = #{biRuleData.groupId}
+            </if>
+            <if test="biRuleData.industryId != null and  biRuleData.industryId !=0">
+                and exists (select 1 from bi_model where input_id = s.input_file_detail_id and type = 4 and model_id = #{biRuleData.industryId})
+            </if>
+            <if test="biRuleData.reportType != null and biRuleData.reportType !=0">
+                and s.report_type = #{biRuleData.reportType}
+            </if>
+            <if test="biRuleData.moduleTypeId != null and biRuleData.moduleTypeId !=0">
+                and s.module_type_id = #{biRuleData.moduleTypeId}
+            </if>
+            <if test="biRuleData.startDate != null ">
+                and s.date &gt;= #{biRuleData.startDate}
+            </if>
+            <if test="biRuleData.endDate != null">
+                and s.date &lt;= #{biRuleData.endDate}
+            </if>
+        </where>
+        group by s.date
+        <if test="biRuleData.groupId == null or biRuleData.groupId == 0">
+            union all
+            select count(1) count_,s.date from api_bi_input_data s
+            <where>
+                s.hit=1 and s.report_status=1 and s.type = 1
+                <if test="biRuleData.apiCode != null">
+                    and s.api_code=#{biRuleData.apiCode}
+                    and s.module_type_id in (SELECT api.module_type_id FROM module_type_api api where api.api_code=#{biRuleData.apiCode})
+                </if>
+                <if test="biRuleData.industryId != null and  biRuleData.industryId !=0">
+                    and exists (select 1 from api_bi_model where input_id = s.input_file_detail_id and type = 4 and model_id = #{biRuleData.industryId})
+                </if>
+                <if test="biRuleData.reportType != null and biRuleData.reportType !=0">
+                    and s.report_type = #{biRuleData.reportType}
+                </if>
+                <if test="biRuleData.moduleTypeId != null and biRuleData.moduleTypeId !=0">
+                    and s.module_type_id = #{biRuleData.moduleTypeId}
+                </if>
+                <if test="biRuleData.startDate != null ">
+                    and s.date &gt;= #{biRuleData.startDate}
+                </if>
+                <if test="biRuleData.endDate != null">
+                    and s.date &lt;= #{biRuleData.endDate}
+                </if>
+            </where>
+            group by s.date) t group by t.date
+        </if>
+        ) count_data on count_data.date=date_data.date
+        where 1=1
+        <if test="biRuleData.startDate != null ">
+            and date_data.date &gt;= #{biRuleData.startDate}
+        </if>
+        <if test="biRuleData.endDate != null">
+            and date_data.date &lt;= #{biRuleData.endDate}
+        </if>
+        order by  date_data.date asc
+    </select>
+
+    <select id="findHitRuleCompanyByMonthList" resultMap="biRuleData_map"
+            parameterType="com.biz.credit.domain.responseData.BiRuleDataRes">
+        SELECT DISTINCT
+        date_data.month date_ , IFNULL(count_data.count_ ,0) count_
+        FROM bi_date date_data
+        LEFT JOIN
+        (SELECT count(s.month) count_,s.month date_
+        from
+        (SELECT
+        i.api_code,
+        i.group_id,
+        i.industry_id,
+        i.report_type,
+        i.module_type_id,
+        i.month
+        FROM bi_input_data i
+        INNER JOIN (SELECT
+        r.input_file_detail_id
+        FROM bi_rule_data r
+        WHERE r.hit = 1
+        GROUP BY r.input_file_detail_id
+        HAVING COUNT( * ) > 0) d
+        ON i.input_file_detail_id = d.input_file_detail_id) s
+        <where>1=1
+            <if test="biRuleData.apiCode != null">
+                and s.api_code=#{biRuleData.apiCode}
+                and s.module_type_id in (SELECT api.module_type_id FROM module_type_api api where api.api_code=#{biRuleData.apiCode})
+            </if>
+            <if test="biRuleData.groupId != null and biRuleData.groupId !=0">
+                and s.group_id = #{biRuleData.groupId}
+            </if>
+            <if test="biRuleData.industryId != null and  biRuleData.industryId !=0">
+                and s.industry_id = #{biRuleData.industryId}
+            </if>
+            <if test="biRuleData.reportType != null and biRuleData.reportType !=0">
+                and s.report_type = #{biRuleData.reportType}
+            </if>
+            <if test="biRuleData.moduleTypeId != null and biRuleData.moduleTypeId !=0">
+                and s.module_type_id = #{biRuleData.moduleTypeId}
+            </if>
+            <if test="biRuleData.startMonth != null ">
+                and s.month &gt;= #{biRuleData.startMonth}
+            </if>
+            <if test="biRuleData.endMonth != null">
+                and s.month &lt;= #{biRuleData.endMonth}
+            </if>
+
+        </where>
+        group by s.month) count_data
+        ON date_data.month = count_data.date_
+        <where>1=1
+            <if test="biRuleData.startMonth != null ">
+                and date_data.month &gt;= #{biRuleData.startMonth}
+            </if>
+            <if test="biRuleData.endMonth != null">
+                and date_data.month &lt;= #{biRuleData.endMonth}
+            </if>
+        </where>
+        order by date_data.month asc;
+    </select>
+
+
+    <select id="findHitRuleCompanyByYearList" resultMap="biRuleData_map"
+            parameterType="com.biz.credit.domain.responseData.BiRuleDataRes">
+        SELECT DISTINCT
+        date_data.year date_, IFNULL(count_data.count_ ,0) count_
+        FROM bi_date date_data
+        LEFT JOIN
+        (SELECT count(s.year) count_,s.year date_
+        from
+        (SELECT
+        i.api_code,
+        i.group_id,
+        i.industry_id,
+        i.report_type,
+        i.module_type_id,
+        i.year
+        FROM bi_input_data i
+        INNER JOIN (SELECT
+        r.input_file_detail_id
+        FROM bi_rule_data r
+        WHERE r.hit = 1
+        GROUP BY r.input_file_detail_id
+        HAVING COUNT( * ) > 0) d
+        ON i.input_file_detail_id = d.input_file_detail_id) s
+        <where>1=1
+            <if test="biRuleData.apiCode != null">
+                and s.api_code = #{biRuleData.apiCode}
+                and s.module_type_id in (SELECT api.module_type_id FROM module_type_api api where api.api_code=#{biRuleData.apiCode})
+            </if>
+            <if test="biRuleData.groupId != null and biRuleData.groupId !=0">
+                and s.group_id = #{biRuleData.groupId}
+            </if>
+            <if test="biRuleData.industryId != null and  biRuleData.industryId !=0">
+                and s.industry_id = #{biRuleData.industryId}
+            </if>
+            <if test="biRuleData.reportType != null and biRuleData.reportType !=0">
+                and s.report_type = #{biRuleData.reportType}
+            </if>
+            <if test="biRuleData.moduleTypeId != null and biRuleData.moduleTypeId !=0">
+                and s.module_type_id = #{biRuleData.moduleTypeId}
+            </if>
+            <if test="biRuleData.startYear != null ">
+                and s.year &gt;= #{biRuleData.startYear}
+            </if>
+            <if test="biRuleData.endYear != null">
+                and s.year &lt;= #{biRuleData.endYear}
+            </if>
+
+        </where>
+        group by s.year) count_data
+        ON date_data.year = count_data.date_
+        <where> 1=1
+            <if test="biRuleData.startYear != null ">
+                and date_data.year &gt;= #{biRuleData.startYear}
+            </if>
+            <if test="biRuleData.endYear != null">
+                and date_data.year &lt;= #{biRuleData.endYear}
+            </if>
+        </where>
+        order by  date_data.year asc;
+    </select>
+
+    <resultMap id="biRuleIdData_map" type="com.biz.credit.domain.responseData.BiRuleIdDataRes">
+        <result property="ruleName" column="ruleName"/>
+        <result property="count_" column="count_"/>
+    </resultMap>
+
+    <resultMap id="biRuleDataVO_map" type="com.biz.credit.vo.BiRuleDataVO">
+        <result property="inputFileDetailId" column="input_file_detail_id"/>
+        <result property="ruleId" column="rule_id"/>
+        <result property="hit" column="hit"/>
+        <result property="date" column="date"/>
+        <result property="month" column="month"/>
+        <result property="datetime" column="datetime"/>
+        <result property="apiCode" column="api_code"/>
+        <result property="groupId" column="group_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="industryId" column="industry_id"/>
+        <result property="reportType" column="report_type"/>
+        <result property="moduleTypeId" column="module_type_id" />
+    </resultMap>
+    <select id="findBiRuleDataListByBiReportQueryCriteriaVO"
+            resultType="com.biz.credit.vo.BiRuleDataVO">
+        SELECT d.variable_name prodName, t.threshold threshold, t.count
+        FROM (
+            SELECT variable_code, threshold, `interval`, COUNT(1) `count` FROM (
+                SELECT d.var_p_id AS variable_code, c.var_threshold AS threshold, a.interval
+                FROM bi_rule_data a
+                inner join bi_input_data b on b.input_file_detail_id=a.input_file_detail_id
+                inner join t_d_node_rule_var c on c.var_id=a.rule_id
+                INNER JOIN t_d_rule_var d ON c.src_var_id = d.var_id
+                where a.hit=1 and b.report_status=1 and b.type = 1
+                <if test="null != query.apiCode and '' != query.apiCode">
+                    and b.api_code=#{query.apiCode}
+                </if>
+                <if test="null != query.groupId and 0 != query.groupId">
+                    and b.group_id=#{query.groupId}
+                </if>
+                <if test="null != query.startDate and '' != query.startDate">
+                    and a.date &gt;=#{query.startDate}
+                </if>
+                <if test="null != query.endDate and '' != query.endDate">
+                    and a.date &lt; #{query.endDate}
+                </if>
+                <if test="null != query.moduleTypeId and 0 != query.moduleTypeId">
+                    and b.module_type_id=#{query.moduleTypeId}
+                </if>
+                <if test="null != query.industryId and 0 != query.industryId">
+                    and exists (select 1 from bi_model where input_id = b.input_file_detail_id and type = 4 and model_id = #{query.industryId})
+                </if>
+                <if test="query.groupId == null or query.groupId == 0">
+                    UNION ALL
+                    SELECT d.var_p_id AS variable_code, c.var_threshold AS threshold, a.interval
+                    FROM api_bi_rule_data a
+                    inner join api_bi_input_data b on b.input_file_detail_id=a.input_file_detail_id
+                    inner join t_d_node_rule_var c on c.var_id=a.rule_id
+                    INNER JOIN t_d_rule_var d ON c.src_var_id = d.var_id
+                    where a.hit=1 and b.report_status=1 and b.type = 1
+                    <if test="null != query.apiCode and '' != query.apiCode">
+                        and b.api_code=#{query.apiCode}
+                    </if>
+                    <if test="null != query.startDate and '' != query.startDate">
+                        and a.date &gt;=#{query.startDate}
+                    </if>
+                    <if test="null != query.endDate and '' != query.endDate">
+                        and a.date &lt; #{query.endDate}
+                    </if>
+                    <if test="null != query.moduleTypeId and 0 != query.moduleTypeId">
+                        and b.module_type_id=#{query.moduleTypeId}
+                    </if>
+                    <if test="null != query.industryId and 0 != query.industryId">
+                        and exists (select 1 from api_bi_model where input_id = b.input_file_detail_id and type = 4 and model_id = #{query.industryId})
+                    </if>
+                </if>
+            ) m group by variable_code, threshold, `interval`
+        ) t
+        INNER JOIN t_variable_pool d
+        ON d.variable_code = t.variable_code
+        ORDER BY `count` DESC, d.variable_name desc
+    </select>
+    <select id="findHitRuleMostByDayList" resultMap="biRuleIdData_map" resultType="com.biz.credit.domain.responseData.BiRuleIdDataRes">
+        SELECT d.variable_name as ruleName, t.count_
+        FROM (
+            SELECT variable_code, threshold, `interval`, COUNT(1) as count_ FROM (
+                SELECT d.var_p_id AS variable_code, c.var_threshold AS threshold, a.interval
+                FROM bi_rule_data a
+                INNER JOIN bi_input_data b ON b.input_file_detail_id = a.input_file_detail_id
+                INNER JOIN t_d_node_rule_var c ON c.var_id = a.rule_id
+                INNER JOIN t_d_rule_var d ON c.src_var_id = d.var_id
+                WHERE a.hit = 1 AND b.report_status = 1 AND b.type = 1
+                <if test="null != query.apiCode and '' != query.apiCode">
+                    and b.api_code=#{query.apiCode}
+                </if>
+                <if test="null != query.groupId and 0 != query.groupId">
+                    and b.group_id=#{query.groupId}
+                </if>
+                <if test="null != query.startDate and '' != query.startDate">
+                    and a.date &gt;=#{query.startDate}
+                </if>
+                <if test="null != query.endDate and '' != query.endDate">
+                    and a.date &lt;= #{query.endDate}
+                </if>
+                <if test="null != query.moduleTypeId and 0 != query.moduleTypeId">
+                    and b.module_type_id=#{query.moduleTypeId}
+                </if>
+                <if test="null != query.industryId and 0 != query.industryId">
+                    and exists (select 1 from bi_model where input_id = b.input_file_detail_id and type = 4 and model_id = #{query.industryId})
+                </if>
+                <if test="query.groupId == null or query.groupId == 0">
+                    UNION ALL
+                    SELECT d.var_p_id AS variable_code, c.var_threshold AS threshold, a.interval
+                    FROM api_bi_rule_data a
+                    INNER JOIN api_bi_input_data b ON b.input_file_detail_id = a.input_file_detail_id
+                    INNER JOIN t_d_node_rule_var c ON c.var_id = a.rule_id
+                    INNER JOIN t_d_rule_var d ON c.src_var_id = d.var_id
+                    WHERE a.hit = 1 AND b.report_status = 1 AND b.type = 1
+                    <if test="null != query.apiCode and '' != query.apiCode">
+                        and b.api_code=#{query.apiCode}
+                    </if>
+                    <if test="null != query.startDate and '' != query.startDate">
+                        and a.date &gt;=#{query.startDate}
+                    </if>
+                    <if test="null != query.endDate and '' != query.endDate">
+                        and a.date &lt;= #{query.endDate}
+                    </if>
+                    <if test="null != query.moduleTypeId and 0 != query.moduleTypeId">
+                        and b.module_type_id=#{query.moduleTypeId}
+                    </if>
+                    <if test="null != query.industryId and 0 != query.industryId">
+                        and exists (select 1 from api_bi_model where input_id = b.input_file_detail_id and type = 4 and model_id = #{query.industryId})
+                    </if>
+                </if>
+            ) m group by variable_code, threshold, `interval`
+        ) t
+        INNER JOIN t_variable_pool d
+        ON d.variable_code = t.variable_code
+        ORDER BY t.count_ DESC, d.variable_name desc LIMIT 0,10
+    </select>
+</mapper>

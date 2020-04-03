@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.DRuleDAO">
+
+    <resultMap id="dRule_map" type="com.biz.credit.vo.DRuleVO">
+        <result column="rule_id" property="ruleId" />
+        <result column="rule_code" property="ruleCode" />
+        <result column="rule_name" property="ruleName" />
+        <result column="rule_version" property="ruleVersion" />
+        <result column="rule_type" property="ruleType" />
+        <result column="rule_desc" property="ruleDesc" />
+        <result column="rule_weight" property="ruleWeight" />
+        <result column="calc_logic" property="calcLogic" />
+        <result column="rule_api_prod_code" property="apiProdCode" />
+        <result column="rule_api_version" property="apiVersion" />
+        <collection property="dRuleVarVOList" ofType="com.biz.credit.vo.DRuleVarVO"
+                    javaType="java.util.ArrayList" resultMap="dRuleVar_map">
+        </collection>
+    </resultMap>
+
+    <resultMap id="pocRule_map" type="com.biz.credit.vo.DRuleVO">
+        <result column="rule_id" property="ruleId" />
+        <result column="rule_code" property="ruleCode" />
+        <result column="rule_name" property="ruleName" />
+        <result column="rule_version" property="ruleVersion" />
+        <result column="rule_type" property="ruleType" />
+        <result column="rule_desc" property="ruleDesc" />
+        <result column="rule_weight" property="ruleWeight" />
+        <result column="calc_logic" property="calcLogic" />
+        <result column="rule_api_prod_code" property="apiProdCode" />
+        <result column="rule_api_version" property="apiVersion" />
+        <collection property="dRuleVarVOList" ofType="com.biz.credit.vo.DRuleVarVO" select="selectDruleVarMap"
+                     column="rule_id">
+        </collection>
+    </resultMap>
+
+
+    <resultMap id="dRuleVar_map" type="com.biz.credit.vo.DRuleVarVO">
+        <result column="var_id" property="varId" />
+        <result column="var_p_id" property="varPId" />
+        <result column="var_desc" property="varDesc" />
+        <result column="var_weight" property="varWeight" />
+        <result column="var_threshold" property="varThreshold" />
+        <result column="var_period" property="varPeriod" />
+        <result column="period_unit" property="periodUnit" />
+        <result column="prod_code" property="prodCode" />
+        <result column="variable_name" property="variableName" />
+        <result column="variable_type_code" property="variableTypeCode" />
+        <result column="version" property="version" />
+        <result column="data_type" property="dataType" />
+        <result column="default_threshold" property="defaultThreshold" />
+        <result column="data_source" property="dataSource" />
+        <result column="var_api_prod_code" property="apiProdCode" />
+        <result column="var_api_version" property="apiVersion" />
+        <result column="description" property="description" />
+        <result column="pocSrcVarId" property="pocSrcVarId" />
+    </resultMap>
+
+    <select id = "selectDruleVarMap" resultMap="dRuleVar_map">
+        SELECT var.var_id,var.var_p_id,var.var_desc,var.var_weight,var.var_threshold,var.var_period,
+        var.period_unit,pool.prod_code,pool.variable_name,pool.variable_type_code,pool.version,
+        pool.data_type,pool.default_threshold,pool.data_source,pool.api_prod_code AS var_api_prod_code,
+        pool.api_version AS var_api_version,pool.description,ref.pocSrcVarId
+        FROM t_d_rule_var var INNER JOIN t_variable_pool pool ON var.var_p_id=pool.variable_code AND pool.valid = 1
+        LEFT JOIN (SELECT max(var_id) pocSrcVarId,var_p_id FROM t_variable_reference  GROUP BY var_p_id) ref ON pool.variable_code=ref.var_p_id
+        WHERE var.rule_id = #{ruleId}
+    </select>
+    <select id="queryListByKeyword" resultMap="dRule_map">
+        select r.rule_id,r.rule_code,r.rule_name,r.rule_version,r.rule_type,r.rule_desc,r.rule_weight,r.calc_logic,
+        r.api_prod_code as rule_api_prod_code,r.api_version as rule_api_version,
+        var.var_id,var.var_p_id,var.var_desc,var.var_weight,var.var_threshold,var.var_period,
+        var.period_unit,pool.prod_code,pool.variable_name,pool.variable_type_code,pool.version,
+        pool.data_type,pool.default_threshold,pool.data_source,pool.api_prod_code as var_api_prod_code,
+        pool.api_version as var_api_version,pool.description
+        from t_d_rule r
+        inner join t_d_rule_var var on r.rule_id = var.rule_id and var.status = 1
+        inner join t_variable_pool pool
+        on var.var_p_id=pool.variable_code and pool.valid = 1
+        where r.rule_type = #{rule.ruleType}
+        and exists (select 1 from t_project_api where api_code = #{rule.apiCode} and prod_code = r.api_prod_code and version = r.api_version and status = 1)
+        <if test="rule.keyword != null and rule.keyword != ''">
+          and (r.rule_name like concat('%',#{rule.keyword},'%') or pool.variable_name like concat('%',#{rule.keyword},'%'))
+        </if>
+        and r.status = 1
+    </select>
+    <select id="querySrcRuleList" resultMap="pocRule_map">
+        select r.rule_id,r.rule_code,r.rule_name,r.rule_version,r.rule_type,r.rule_desc,r.rule_weight,r.calc_logic,
+        r.api_prod_code as rule_api_prod_code,r.api_version as rule_api_version
+        from t_d_rule r
+        where r.rule_type in (1,2)
+        and exists (select 1 from t_project_api where api_code = #{rule.apiCode} and prod_code = r.api_prod_code and version = r.api_version and status = 1)
+        <if test="rule.keyword != null and rule.keyword != ''">
+            and r.rule_name like concat('%',#{rule.keyword},'%')
+        </if>
+        and r.status = 1
+    </select>
+    <select id="queryRuleList" parameterType="com.biz.credit.vo.DRuleVO">
+        select r.rule_id,r.rule_code,r.rule_name,r.rule_version,r.rule_type,r.rule_desc,r.rule_weight,r.calc_logic,
+        r.api_prod_code,r.api_version from t_d_rule r
+        left join
+        where  1 = 1
+        <if test="rule.ruleType != null">
+           and r.rule_type = #{rule.ruleType}
+        </if>
+        <if test="rule.ruleName != null and rule.ruleName != ''">
+            and r.rule_name like concat('%',#{rule.ruleName},'%')
+        </if>
+        <if test="rule.ruleName != null and rule.ruleName != ''">
+            and r.api_prod_code like concat('%',#{rule.apiProdCode},'%')
+        </if>
+    </select>
+
+    <select id="queryRuleById" resultType="com.biz.credit.vo.DRuleVO">
+        select r.rule_id,r.rule_code,r.rule_name,r.rule_version,r.rule_type,r.rule_desc,r.rule_weight,r.calc_logic,
+        r.api_prod_code,r.api_version,0 as instance from t_d_rule r
+        where rule_id = #{ruleId}
+    </select>
+
+    <select id="queryRuleVersionListByCode"  resultType="com.biz.credit.vo.DRuleVO">
+        select r.rule_id,r.rule_code,r.rule_name,r.rule_version,r.rule_type,r.rule_desc,r.rule_weight,r.calc_logic,
+        r.api_prod_code,r.api_version,0 as instance from t_d_rule r
+        where rule_code = #{ruleCode} and status = 1 order by rule_version
+    </select>
+
+    <resultMap id="nodeParams_list" type="com.biz.credit.domain.DNodeParam">
+        <result column="param_cfg_code" property="code"/>
+        <result column="GROUP_CONCAT(t.param_code)" property="fields"/>
+        <result column="param_name" property="name"/>
+        <result column="MAX(t.required)" property="required"/>
+    </resultMap>
+    <select id="queryByRuleId" resultMap="nodeParams_list">
+        SELECT t.param_cfg_code, t.param_name,GROUP_CONCAT(t.param_code), MAX(t.required) FROM (
+        SELECT DISTINCT n.param_code, c.param_cfg_code, d.param_name, d.param_type, d.param_order, n.required FROM (
+        select api_prod_code,api_version
+        from t_d_rule
+        where rule_id in
+        <foreach collection="nodeRuleIdList" item="dNodeRuleVO" index="index"
+                 open="(" separator="," close=")">#{dNodeRuleVO.srcRuleId}
+        </foreach>
+        GROUP BY api_prod_code,api_version) m
+        INNER JOIN (SELECT a.prod_code, a.version, b.param_code, b.param_name, b.required FROM api_admin.api a
+        INNER JOIN api_admin.api_request b ON a.id = b.api_id and b.status=1) n ON m.api_prod_code = n.prod_code AND m.api_version = n.version
+        INNER JOIN api_admin.api_request_map c ON n.param_code = c.param_code
+        INNER JOIN api_admin.api_param_cfg d ON c.param_cfg_code = d.param_code and d.status=1) t
+        GROUP BY param_cfg_code, param_name, param_type, param_order ORDER BY param_type, param_order;
+    </select>
+
+</mapper>

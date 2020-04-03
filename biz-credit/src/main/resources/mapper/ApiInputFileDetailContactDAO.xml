@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.ApiInputFileDetailContactDAO">
+    <insert id="addContact"  useGeneratedKeys="true" keyProperty="apiInputFileDetailContact.contactId"
+            parameterType="com.biz.credit.domain.ApiInputFileDetailContact" >
+      insert into api_input_file_detail_contact
+          (contact_id,
+          input_file_detail_id,
+          id_number,
+          cell_phone,
+          name,
+          home_addr,
+          biz_addr,
+          last_update_time,
+          create_time)
+     values
+        (#{inputFileDetailContact.contactId},
+        #{inputFileDetailContact.inputFileDetailId},
+        #{inputFileDetailContact.idNumber},
+        #{inputFileDetailContact.cellPhone},
+        #{inputFileDetailContact.name},
+        #{inputFileDetailContact.homeAddr},
+        #{inputFileDetailContact.bizAddr},
+        now(),
+        now())
+    </insert>
+    <insert id="addContacts" useGeneratedKeys="true"  parameterType="java.util.List"  keyProperty="contactId">
+        insert into api_input_file_detail_contact (
+        contact_id,
+        input_file_detail_id,
+        id_number,
+        cell_phone,
+        name,
+        home_addr,
+        biz_addr,
+        last_update_time,
+        create_time)
+        values
+        <foreach collection="list"  item="item" separator="," index="index">
+            (#{item.contactId},
+            #{item.inputFileDetailId},
+            #{item.idNumber},
+            #{item.cellPhone},
+            #{item.name},
+            #{item.homeAddr},
+            #{item.bizAddr},
+            now(),
+            now())
+        </foreach>
+    </insert>
+</mapper>

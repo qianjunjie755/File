@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.DRuleVarDAO">
+
+
+    <select id="queryById" resultType="com.biz.credit.vo.DRuleVarVO">
+      select var.var_id,var.var_p_id,var.var_desc,var.var_weight,var.var_threshold,var.var_period,
+        var.period_unit,var.rule_id,pool.prod_code,pool.variable_name,pool.api_prod_code,pool.api_version,pool.version
+        from t_d_rule_var var left join t_variable_pool pool
+        on var.var_p_id=pool.variable_code
+        where var_id = #{varId}
+    </select>
+
+    <select id="queryListByRuleId" resultType="com.biz.credit.vo.DRuleVarVO">
+        select var.var_id,var.var_p_id,var.var_desc,var.var_weight,var.var_threshold,var.var_period,
+        var.period_unit,var.rule_id,pool.prod_code,pool.variable_name,pool.api_prod_code,pool.api_version,pool.version
+        from t_d_rule_var var left join t_variable_pool pool
+        on var.var_p_id=pool.variable_code
+        where rule_id = #{ruleId}
+    </select>
+
+    <select id="queryVersionListByProdCode" resultType="com.biz.credit.vo.DRuleVarVO">
+        select var.var_id,var.var_p_id,var.var_desc,var.var_weight,var.var_threshold,var.var_period,
+        var.period_unit,var.rule_id,pool.prod_code,pool.variable_name,pool.api_prod_code,pool.api_version,pool.version
+        from t_d_rule_var var left join t_variable_pool pool
+        on var.var_p_id=pool.variable_code
+        where pool.prod_code = #{prodCode}
+    </select>
+    <update id="updateRuleVar">
+         update t_d_rule_var
+        <set>
+            <if test="dDRuleVar.varWeight!= null and dDRuleVar.varWeight != '' ">
+                var_weight = #{dDRuleVar.varWeight},
+            </if>
+            <if test="dDRuleVar.varThreshold != null and dDRuleVar.varThreshold != '' ">
+                var_threshold = #{dDRuleVar.varThreshold},
+            </if>
+            update_time = now()
+        </set>
+        where var_id = #{dDRuleVar.varId} and status = 1
+    </update>
+    <update id="updateRefVar">
+        update t_variable_reference
+        <set>
+            <if test="dDRuleVar.varThreshold != null and dDRuleVar.varThreshold != '' ">
+                var_threshold = #{dDRuleVar.varThreshold},
+            </if>
+        </set>
+        where var_id = #{dDRuleVar.varId} and status = 1
+    </update>
+    <update id="updateRuleVarList">
+        <foreach collection="list" item="dDRuleVar" index="index" open="" close="" separator=";">
+            update t_d_rule_var
+            <set>
+                <if test="dDRuleVar.varWeight!= null and dDRuleVar.varWeight != '' ">
+                    var_weight = #{dDRuleVar.varWeight},
+                </if>
+                <if test="dDRuleVar.varThreshold != null and dDRuleVar.varThreshold != '' ">
+                    var_threshold = #{dDRuleVar.varThreshold},
+                </if>
+                update_time = now()
+            </set>
+            where var_id = #{dDRuleVar.varId} and status = 1
+        </foreach>
+    </update>
+    <update id="updateRefVarList">
+        <foreach collection="list" item="dDRuleVar" index="index" open="" close="" separator=";">
+            update t_variable_reference
+            <set>
+                <if test="dDRuleVar.varThreshold != null and dDRuleVar.varThreshold != '' ">
+                    var_threshold = #{dDRuleVar.varThreshold},
+                </if>
+            </set>
+            where var_id = #{dDRuleVar.varId} and status = 1
+        </foreach>
+
+    </update>
+
+</mapper>

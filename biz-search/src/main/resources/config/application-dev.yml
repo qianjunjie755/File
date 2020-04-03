@@ -1,0 +1,64 @@
+server:
+  port: 8770
+  servlet:
+    context-path: /search
+    session:
+      cookie:
+        path: /
+        domain: 127.0.0.1
+  connection-timeout: 30s
+  tomcat:
+    max-threads: 200
+    max-connections: 10000
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: 127.0.0.1:${server.port}
+  client:
+    serviceUrl:
+      defaultZone: http://127.0.0.1:8761/eureka/
+
+spring:
+  application:
+    name: search-service
+  redis:
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+        max-wait: -1ms
+    timeout: 10000ms
+    cluster:
+      nodes:
+        - 10.0.110.218:7000
+        - 10.0.110.218:7001
+        - 10.0.110.218:7002
+        - 10.0.110.218:7003
+        - 10.0.110.218:7004
+        - 10.0.110.218:7005
+  datasource:
+    name: test
+    url: jdbc:mysql://10.0.110.219:3390/report?useAffectedRows=true&rewriteBatchedStatements=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true
+    username: bairong
+    password: 123456
+  mvc:
+    async:
+      request-timeout: -1
+  data:
+    elasticsearch:
+      cluster-name: ES-Cluster
+      cluster-nodes: 10.0.110.194:9300,10.0.110.195:9300,10.0.110.197:9300
+#分页插件
+pagehelper:
+  helperDialect: mysql
+  reasonable: true
+  supportMethodsArguments: true
+  params: count=countSql
+  returnPageInfo: check
+
+biz:
+  api-code: 600028
+  task-crontab:
+    load-basic-info: "0 0 1 * * *"

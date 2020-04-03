@@ -1,0 +1,90 @@
+#端口及路径
+server:
+  port: 8769
+  servlet:
+    context-path: /relation_chart
+  ##压缩配置
+  compression:
+    enabled: true
+    min-response-size: 10240
+    mime-types:
+    - image/png
+    - image/jpeg
+    - image/jpg
+    - text/html
+    - application/javascript
+    - text/css
+    - application/octet-stream
+    - application/json
+#注册中心
+eureka:
+  instance:
+    hostname: 127.0.0.1
+  client:
+    serviceUrl:
+      defaultZone: http://127.0.0.1:8761/eureka/
+
+##Spring配置
+spring:
+  ##应用服务名
+  application:
+    name: relation-chart-service
+  ##压缩配置
+  compression:
+    enabled: true
+    min-response-size: 10240
+    mime-types:
+    - image/png
+    - image/jpeg
+    - image/jpg
+    - text/html
+    - application/javascript
+    - text/css
+    - application/octet-stream
+    - application/json
+  ##Neo4j配置
+  data:
+    neo4j:
+      uri: http://10.0.110.219:7474
+      username: neo4j
+      password: 123456
+      connection:
+        pool:
+          size: 30
+        liveness:
+          check:
+            timeout: 3600
+  ##数据源配置
+  datasource:
+    name: test
+    url: jdbc:mysql://10.0.110.219:3306/chart?useAffectedRows=true&rewriteBatchedStatements=true&useUnicode=true&characterEncoding=UTF-8
+    username: bairong
+    password: BaiRong@100credit.com
+  ##redis配置
+  redis:
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+        max-wait: -1ms
+    timeout: 10000ms
+    cluster:
+      nodes:
+        - 10.0.110.218:7000
+        - 10.0.110.218:7001
+        - 10.0.110.218:7002
+        - 10.0.110.218:7003
+        - 10.0.110.218:7004
+        - 10.0.110.218:7005
+
+#应用配置
+biz:
+  api-code: 600028
+  relation-chart:
+    server: 0
+    app-code: biz-chart
+    max-node-size: 5000
+    query-url: http://10.0.110.219:12010/biz/v1/get_data
+    submit-url: http://10.0.110.219:12030/biz_app/v1/submit
+    notify-url: http://10.0.110.219:12030/biz_app/v1/notify

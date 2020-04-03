@@ -1,0 +1,136 @@
+server:
+  port: 8762
+  servlet:
+    context-path: /report
+    session:
+      cookie:
+        path: /
+        domain: 127.0.0.1
+  connection-timeout: 30s
+  tomcat:
+    max-threads: 200
+    max-connections: 10000
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: 127.0.0.1:${server.port}
+  client:
+    serviceUrl:
+      defaultZone: http://127.0.0.1:8761/eureka/
+
+spring:
+  application:
+    name: credit-service
+  redis:
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+        max-wait: -1ms
+    timeout: 10000ms
+    cluster:
+      nodes:
+        - 10.0.110.218:7000
+        - 10.0.110.218:7001
+        - 10.0.110.218:7002
+        - 10.0.110.218:7003
+        - 10.0.110.218:7004
+        - 10.0.110.218:7005
+  resources:
+    static-locations: classpath:/credit-paper/dist/
+  datasource:
+    name: test
+    url: jdbc:mysql://10.0.110.219:3390/report?useAffectedRows=true&rewriteBatchedStatements=true&useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true
+    username: bairong
+    password: 123456
+  mvc:
+    async:
+      request-timeout: -1
+#分页插件
+pagehelper:
+  helperDialect: mysql
+  reasonable: true
+  supportMethodsArguments: true
+  params: count=countSql
+  returnPageInfo: check
+
+#
+apiCode: 4000159
+login_username: qyzxb
+login_password: qyzxb
+#错误参数进件excel上传地址
+upload_root_path: D:\workspace\htmltopdf_files\report
+#登录页面地址
+user_center_url: http://biz-auth.100credit.cn/auth/index.html/UserManagement
+#bi统计时，下载或预览pdf的最小编号
+bi_download_view_min_id: 2825
+#定时任务执行标识
+schedule_run: 0
+#进件参数
+biz_input_param_all: 公司全名_法人代表身份证_法人代表姓名_法人代表电话号码_统一社会信用代码_企业开户账号_法人代表居住地址_法人代表工作地址
+#查询时间限制天数
+select_limit_time: 365
+
+biz:
+#  api-code: 600028
+  api-code: 4000159
+  api_admin:
+    redis:
+      keys:
+        api-param-cfg-map: "{biz:api_admin:api-param-cfg-map}"
+  model:
+    score-card:
+      all-key: "{biz:model:init}:allScoreCards"
+      radar:
+        const1: "0.25"
+        const2: "1.25"
+    flow:
+      node-rule-key: "{biz:model:flow}:node_rule"
+  report:
+    upload-key-prefix: "biz_credit:report:task:upload:"
+    control-key-prefix: "biz_credit:report:uploadLimit:"
+    control-key-apicode-prefix: "biz_credit:report:uploadLimit:apiCode:"
+    control-key-user-Prefix: "biz_credit:report:uploadLimit:user:"
+  decision:
+    app-code: biz-report
+    flow-api: "{biz:decision:init}:flowApis"
+    flow-key: "{biz:decision:init}:allFlows"
+    flow-params: "{biz:decision:init}:flowParams"
+    queue-name: "{biz:decision:queue}:creditQueue"
+    basic-url: http://10.0.110.219:8023/ice_wall/api/get_data
+    score-url: http://10.0.110.218:8767/model/get_result
+    model-url: http://10.0.110.219:8023/ice_wall/model/get_data
+    query-url: http://10.0.110.219:8023/ice_wall/derive/query_data
+    result-url: http://10.0.110.219:8023/ice_wall/derive/get_result
+    submit-url: http://10.0.110.219:8023/ice_wall/app/submit
+    notify-url: http://10.0.110.219:8023/ice_wall/app/notify
+    wait-minutes: 2
+    score-range-key: "{biz:decision:score}:creditRanges"
+    engine:
+      core-pool-size: 16
+      max-pool-size: 64
+      keep-alive-time: 10
+    report:
+      upload-key-prefix: "biz_credit:report:task:upload:"
+      radar-url: http://10.0.110.219:8767/model/radar/get_result
+      query-url: http://10.0.110.219:8084/ice_wall/api/query_data
+      basic-url: http://10.0.110.219:8084/ice_wall/api/get_result
+      api-answer-url: http://10.0.110.219:8084/ice_wall/api/get_data
+      api-finish-url: http://10.0.110.219:12011/message/bus/task/finish
+      api-failed-url: http://10.0.110.196:12011/message/bus/task/fail
+      domain-address: http://172.17.108.72:8762/report/
+      delete-html: false
+      html-pdf-windows-execute: C:/software/wkhtmltopdf/bin/wkhtmltopdf.exe
+      html-pdf-linux-execute: http://172.17.108.219:9381/wkhtmltopdfTask.php
+      html-pdf-files-path: D:/workspace/htmltopdf_files/report/
+      is-print-report-log: true
+      is-async-invoke-report: true
+  task:
+    check-json-data: "{\"api\":\"BizBasicInfo\",\"search_key\":\"bizCredit\" ,\"version\":\"1.0\"}"
+    old:
+      taskInputSizeKey: "biz_credit:report:task:size"
+      reportBiReportDataList: "biz_credit:bi:report:biReportData:list"
+  api:
+    excel-path: "C:\\cenruyu\\Documents\\biz\\api_admin\\百融企业征信数据产品字典V5.4-商务版(1) - 副本.xlsx"

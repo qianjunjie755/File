@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.warning.dao.RuleSetDAO">
+    <resultMap id="ruleSet_map" type="com.biz.warning.vo.RuleSetVO">
+        <result property="ruleSetId" column="rule_set_id" />
+        <result property="ruleSetName" column="rule_set_name" />
+        <result property="ruleSetCode" column="rule_set_code" />
+        <result property="calcLogic" column="calc_logic" />
+        <result property="userId" column="user_id" />
+        <result property="apiCode" column="api_code" />
+        <result property="srcRuleSetId" column="src_rule_set_id" />
+        <result property="isTemplate" column="is_template" />
+        <result property="apiProdCode" column="api_prod_code" />
+        <result property="apiVersion" column="api_version" />
+        <result property="description" column="description" />
+        <result property="lastUpdateTime" column="last_update_time" />
+        <result property="createTime" column="create_time" />
+        <result property="priority" column="priority" />
+        <collection property="ruleVOList" ofType="com.biz.warning.vo.RuleVO"
+                    javaType="java.util.ArrayList" resultMap="rule_map">
+        </collection>
+    </resultMap>
+
+    <resultMap id="rule_map" type="com.biz.warning.vo.RuleVO">
+        <result property="ruleId" column="rule_id" />
+        <result property="ruleCode" column="rule_code" />
+        <result property="ruleName" column="rule_name" />
+        <result property="businessCode" column="business_code" />
+        <result property="version" column="version" />
+        <result property="calcLogic" column="calc_logic" />
+        <result property="userId" column="user_id" />
+        <result property="apiCode" column="api_code" />
+        <result property="srcRuleId" column="src_rule_id" />
+        <result property="srcRuleCode" column="src_rule_code" />
+        <result property="ruleState" column="rule_state" />
+        <result property="isTemplate" column="is_template" />
+        <result property="apiProdCode" column="api_prod_code" />
+        <result property="apiVersion" column="api_version" />
+        <result property="description" column="description" />
+        <result property="lastUpdateTime" column="last_update_time" />
+        <result property="createTime" column="create_time" />
+        <result property="srcRuleId" column="src_rule_id" />
+    </resultMap>
+
+    <insert id="addRuleSet" useGeneratedKeys="true" keyProperty="ruleSet.ruleSetId"   parameterType="com.biz.warning.vo.RuleSetVO">
+        INSERT INTO risk_warning.t_rule_set
+        (rule_set_name,
+        rule_set_code,
+        calc_logic,
+        user_id,
+        api_code,
+        src_rule_set_id,
+        is_template,
+        api_prod_code,
+        api_version,
+        description,
+        last_update_time,
+        create_time,
+        priority)
+        VALUES
+        (#{ruleSet.ruleSetName},#{ruleSet.ruleSetCode},#{ruleSet.calcLogic},#{ruleSet.userId},#{ruleSet.apiCode},#{ruleSet.srcRuleSetId},
+        #{ruleSet.isTemplate},#{ruleSet.apiProdCode},#{ruleSet.apiVersion},#{ruleSet.description}, now(),now(),#{ruleSet.priority})
+    </insert>
+
+    <insert id="addRuleSetList" useGeneratedKeys="true" keyProperty="ruleSetId"   parameterType="java.util.List">
+        INSERT INTO risk_warning.t_rule_set
+        (rule_set_name,
+        calc_logic,
+        user_id,
+        api_code,
+        rule_set_code,
+        src_rule_set_id,
+        is_template,
+        api_prod_code,
+        api_version,
+        description,
+        last_update_time,
+        create_time,priority)
+        VALUES
+        <foreach collection ="list" item="ruleSet" index="index" separator=",">
+        (#{ruleSet.ruleSetName},#{ruleSet.calcLogic},#{ruleSet.userId},#{ruleSet.apiCode},#{ruleSet.ruleSetCode},#{ruleSet.srcRuleSetId},
+        #{ruleSet.isTemplate},#{ruleSet.apiProdCode},#{ruleSet.apiVersion},#{ruleSet.description}, now(), now(),#{ruleSet.priority})
+        </foreach>
+    </insert>
+
+    <update id="updateRuleSet"  parameterType="com.biz.warning.vo.RuleSetVO">
+        UPDATE t_rule_set SET
+        rule_set_name = #{ruleSet.ruleSetName},
+        calc_logic = #{ruleSet.calcLogic},
+        last_update_time  = now(),
+        src_rule_set_id = #{ruleSet.srcRuleSetId},
+        is_template = #{ruleSet.isTemplate}
+        WHERE
+        rule_set_id = #{ruleSet.ruleSetId}
+    </update>
+    <update id="updateRuleSetForCopyStrategy" parameterType="com.biz.warning.vo.RuleSetVO">
+        UPDATE risk_warning.t_rule_set SET
+            src_rule_set_id=rule_set_id,
+            last_update_time  = now()
+        where api_code=#{ruleSetVO.apiCode} and is_template=1 and user_id=#{ruleSetVO.userId}
+    </update>
+
+    <select id="findAllRuleSet" resultMap="ruleSet_map" parameterType="com.biz.warning.vo.RuleSetVO">
+        SELECT
+        t.rule_set_id, t.rule_set_name, t.api_prod_code, t.api_version
+        FROM t_rule_set t
+        WHERE t.is_template = #{ruleSet.isTemplate}
+        <if test="null != ruleSet.origin">
+            and t.origin = #{ruleSet.origin}
+        </if>
+    </select>
+
+    <insert id="relateRule" useGeneratedKeys="true" keyProperty="rulesetRule.rulesetRuleId"   parameterType="com.biz.warning.domain.RulesetRule">
+        INSERT INTO t_ruleset_rule
+        (rule_set_id,
+        rule_id,
+        last_update_time,
+        create_time)
+        VALUES
+        (#{rulesetRule.ruleSetId},#{rulesetRule.ruleId}, now(), now())
+    </insert>
+
+    <insert id="relateRuleList" useGeneratedKeys="true" keyProperty="rulesetRule.rulesetRuleId"   parameterType="java.util.List">
+        INSERT INTO t_ruleset_rule
+        (rule_set_id,
+        rule_id,
+        last_update_time,
+        create_time)
+        VALUES
+        <foreach collection ="list" item="rulesetRule" index="index" separator=",">
+        (#{rulesetRule.ruleSetId},#{rulesetRule.ruleId}, now(), now())
+        </foreach>
+    </insert>
+
+    <select id="findRulesByRuleSet" resultMap="rule_map" parameterType="com.biz.warning.vo.RuleSetVO">
+        SELECT
+        t.rule_id, t.rule_code, t.rule_name, t.version,t.src_rule_id, t.calc_logic,t.is_template,t.api_prod_code,t.rule_state,t.api_version,t.src_rule_code
+        FROM risk_warning.t_rule t
+        inner join risk_warning.t_ruleset_rule t2 on t.rule_id=t2.rule_id
+        WHERE  t2.rule_set_id = #{ruleSetVO.ruleSetId}
+        <if test="null != ruleSetVO.userId">
+            and t.user_id = #{ruleSetVO.userId}
+        </if>
+        <if test="null != ruleSetVO.apiCode">
+            and t.api_code = #{ruleSetVO.apiCode}
+        </if>
+        order by t.rule_id desc
+    </select>
+
+    <select id="findRuleSetListForTaskByStrategyId" resultType="com.biz.warning.vo.RuleSetVO">
+        select t.api_prod_code apiProdCode,t.api_version apiVersion from risk_warning.t_rule_set t inner join risk_warning.t_strategy_rule_set t1 on t1.rule_set_id=t.rule_set_id
+        where t1.strategy_id=#{strategyId}
+    </select>
+
+    <delete id="deleteRules" parameterType="com.biz.warning.domain.Rule" >
+        DELETE FROM t_ruleset_rule
+        WHERE
+        rule_id = #{rule.ruleId}
+    </delete>
+
+    <delete id="deleteRulesByRuleSet" parameterType="com.biz.warning.domain.RuleSet" >
+        DELETE FROM t_ruleset_rule
+        WHERE
+        rule_set_id = #{ruleSet.ruleSetId}
+    </delete>
+
+    <delete id="deleteRuleSet" parameterType="com.biz.warning.vo.RuleSetVO" >
+        DELETE FROM t_rule_set
+        WHERE
+        rule_set_id = #{ruleSet.ruleSetId}
+    </delete>
+    <delete id="deleteRulesetRule" parameterType="com.biz.warning.vo.RuleSetVO">
+        DELETE FROM risk_warning.t_ruleset_rule
+        WHERE rule_set_id=#{ruleSetRule.ruleSetId} and rule_id=#{ruleSetRule.ruleId}
+    </delete>
+
+
+    <select id="findRuleSetByRuleId" resultType="com.biz.warning.vo.RuleSetVO">
+        select rs.rule_set_id,rs.rule_set_code,rs.rule_set_name,rs.description,rs.api_prod_code,rs.api_version
+        from t_ruleset_rule rsr left join t_rule r
+        on rsr.rule_id=r.rule_id left join t_rule_set rs
+        on rsr.rule_set_id=rs.rule_set_id where r.rule_id=#{ruleId} and r.api_code=#{apiCode} limit 1
+    </select>
+    <select id="findRuleSetByRuleSet" resultType="com.biz.warning.vo.RuleSetVO" resultMap="ruleSet_map">
+        select
+            rule_set_id,
+            rule_set_name,
+            calc_logic,
+            user_id,
+            api_code,
+            rule_set_code,
+            src_rule_set_id,
+            is_template,
+            api_prod_code,
+            api_version,
+            description,
+            last_update_time,
+            create_time,priority
+        from  risk_warning.t_rule_set
+        where rule_set_id=#{ruleSet.ruleSetId}
+    </select>
+
+    <select id="findRuleSetById" resultType="com.biz.warning.vo.RuleSetVO" resultMap="ruleSet_map">
+        select
+        rule_set_id,
+        rule_set_name,
+        calc_logic,
+        user_id,
+        api_code,
+        rule_set_code,
+        src_rule_set_id,
+        is_template,
+        api_prod_code,
+        api_version,
+        description,
+        last_update_time,
+        create_time,
+        priority
+        from  risk_warning.t_rule_set
+        where rule_set_id=#{ruleSetId}
+    </select>
+
+
+    <select id="findRuleSetByParam" resultType="com.biz.warning.vo.RuleSetVO" resultMap="ruleSet_map">
+        select rs.rule_set_id, rs.rule_set_name, rs.api_prod_code, rs.api_version,
+        r.rule_id, r.rule_code, r.rule_name, r.version,r.src_rule_id,r.is_template,r.api_prod_code,r.rule_state,r.api_version
+        from t_rule_set rs
+				inner join t_ruleset_rule rsr on rs.rule_set_id=rsr.rule_set_id
+				inner join t_rule r on rsr.rule_id=r.rule_id
+        WHERE rs.is_template = #{ruleSet.isTemplate}
+        <if test="null != ruleSet.ruleName and '' != ruleSet.ruleSetName">
+            and rs.rule_set_name like CONCAT('%',#{ruleSet.ruleSetName},'%')
+        </if>
+        <if test="null != ruleSet.apiProdCode and '' != ruleSet.apiProdCode">
+            and rs.api_prod_code like CONCAT('%',#{ruleSet.apiProdCode},'%')
+        </if>
+        <if test="null != ruleSet.ruleName and '' != ruleSet.ruleName">
+            and r.rule_name like CONCAT('%',#{ruleSet.ruleName},'%')
+        </if>
+        <if test="null != ruleSet.ruleCode and '' != ruleSet.ruleCode">
+            and r.rule_code = #{ruleSet.ruleCode}
+        </if>
+        <if test="null != ruleSet.origin">
+            and rs.origin = #{ruleSet.origin}
+        </if>
+        group by r.rule_code
+    </select>
+
+    <select id="findRuleListByRuleSet" resultMap="rule_map" parameterType="com.biz.warning.vo.RuleSetVO">
+        select * from
+        (SELECT
+        t.rule_id,t.business_code,t.rule_code, t.rule_name, t.version,t.src_rule_id, t.calc_logic,t.is_template,t.api_prod_code,t.rule_state,t.api_version,t.last_update_time,t.src_rule_code
+        FROM risk_warning.t_rule t
+        inner join risk_warning.t_ruleset_rule t2 on t.rule_id=t2.rule_id
+        WHERE  t2.rule_set_id = #{ruleSetVO.ruleSetId} and t.api_code = #{ruleSetVO.apiCode}
+        <if test="null != ruleSetVO.userId">
+            and t.user_id = #{ruleSetVO.userId}
+        </if>
+        <if test="null != ruleSetVO.ruleName and '' != ruleSetVO.ruleName">
+            and t.rule_name like CONCAT('%',#{ruleSetVO.ruleName},'%')
+        </if>
+        <if test="null != ruleSetVO.ruleCode and '' != ruleSetVO.ruleCode">
+            and t.rule_code = #{ruleSetVO.ruleCode}
+        </if>
+        order by t.last_update_time desc limit 99999999) a
+        group by a.rule_code order by a.last_update_time desc
+    </select>
+
+    <select id="findActiveRuleByRuleSet" resultMap="rule_map" parameterType="com.biz.warning.vo.RuleSetVO">
+        select * from
+        (SELECT
+        t.rule_id,t.business_code,t.rule_code, t.rule_name, t.version,t.src_rule_id, t.calc_logic,t.is_template,t.api_prod_code,t.rule_state,t.api_version,t.last_update_time,t.src_rule_code
+        FROM risk_warning.t_rule t
+        inner join risk_warning.t_ruleset_rule t2 on t.rule_id=t2.rule_id
+        WHERE  t2.rule_set_id = #{ruleSetVO.ruleSetId} and t.rule_state in (1,2) and t.api_code = #{ruleSetVO.apiCode}
+        <if test="null != ruleSetVO.userId">
+            and t.user_id = #{ruleSetVO.userId}
+        </if>
+        order by t.last_update_time desc limit 99999999) a
+        group by a.rule_code order by a.last_update_time desc
+    </select>
+
+    <select id="findOriginRuleSet" resultType="com.biz.warning.vo.RuleSetVO" resultMap="ruleSet_map">
+        select
+        rule_set_id,
+        rule_set_name,
+        calc_logic,
+        user_id,
+        api_code,
+        rule_set_code,
+        src_rule_set_id,
+        is_template,
+        api_prod_code,
+        api_version,
+        description,
+        last_update_time,
+        create_time
+        from  risk_warning.t_rule_set
+        where rule_set_code=#{ruleSetVO.ruleSetCode} and api_prod_code=#{ruleSetVO.apiProdCode}
+        and origin=1
+    </select>
+</mapper>

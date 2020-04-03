@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.biz.credit.dao.ProjectApiDAO">
+    <select id="findList" resultType="com.biz.credit.vo.ProjectApiVO">
+     select  api_code, prod_code, version, description, valid_start, valid_end, daily_max, free_count, free_end, billing_rules, stepwise_quotation, client_price, create_time, update_time, charge_mode, charge_mode2, cached, valid
+       from api_admin.project_api
+        where api_code=#{projectApiVO.apiCode} and prod_code=#{projectApiVO.prodCode} and version=#{projectApiVO.version} and valid=1
+        order by version desc
+    </select>
+</mapper>
