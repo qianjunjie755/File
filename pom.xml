@@ -44,17 +44,17 @@
              <dependency>
             <groupId>com.biz</groupId>
             <artifactId>biz-base</artifactId>
-            <version>${biz.base.version}</version>
+            <version>${biz.b21ase.version}</version>
         </dependency>
              <dependency>
             <groupId>com.biz</groupId>
             <artifactId>biz-base</artifactId>
-            <version>${biz.base.version}</version>
+            <version>${biz.2.version}</version>
         </dependency>
              <dependency>
             <groupId>com.biz</groupId>
             <artifactId>biz-base</artifactId>
-            <version>${biz.base.version}</version>
+            <version>213</version>
         </dependency>
     </dependencies>
 
