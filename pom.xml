@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+e<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://d://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.biz</groupId>
     <artifactId>sinopec-credit</artifactId>
@@ -23,11 +22,7 @@
             <artifactId>biz-base</artifactId>
             <version>${biz.base.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.biz</groupId>
-            <artifactId>biz-logback</artifactId>
-            <version>${biz.logback.version}</version>
-        </dependency>
+       
     </dependencies>
 
     <dependencies>
@@ -38,8 +33,7 @@
         </dependency>
         <dependency>
             <groupId>com.biz</groupId>
-            <artifactId>biz-logback</artifactId>
-            <version>${biz.logback.version}</version>
+            <artifactId>biz-l33ek.version}</version>
         </dependency>
              <dependency>
             <groupId>com.biz</groupId>
@@ -47,14 +41,7 @@
             <version>${biz.base.version}</version>
         </dependency>
              <dependency>
-            <groupId>com.biz</groupId>
-            <artifactId>biz-base</artifactId>
-            <version>${biz.base.version}</version>
-        </dependency>
-             <dependency>
-            <groupId>com.biz</groupId>
-            <artifactId>biz-base</artifactId>
-            <version>${biz.base.version}</version>
+            <.version}</version>
         </dependency>
     </dependencies>
 
